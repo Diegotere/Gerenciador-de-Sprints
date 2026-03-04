@@ -1,0 +1,16 @@
+:root {
+  --custom-primary: #00609C;
+  --custom-primary-dark: #004A7A;
+}
+
+.navbar.is-primary {
+  background: linear-gradient(135deg, var(--custom-primary-dark), var(--custom-primary));
+}
+
+.hover-shadow:hover {
+  box-shadow: 0 0.75em 1.5em -0.125em rgba(10,10,10,.15), 0 0 0 1px rgba(10,10,10,.03);
+}
+
+.sprint-card-clickable {
+  cursor: pointer;
+}
