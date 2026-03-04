@@ -1,16 +1,202 @@
+
+/* Bluma Bimeup */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  --custom-primary: #00609C;
-  --custom-primary-dark: #004A7A;
+    --custom-primary: #00609C;
+    --custom-primary-light: #0077C0;
+    --custom-primary-dark: #004A7A;
+    --custom-primary-invert: #ffffff;
+    --custom-link: #00609C;
+    --custom-link-hover: #004A7A;
+    --custom-info: #0090C0; 
+    --custom-info-invert: #ffffff;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa; 
 }
 
 .navbar.is-primary {
-  background: linear-gradient(135deg, var(--custom-primary-dark), var(--custom-primary));
+    background: linear-gradient(135deg, var(--custom-primary-dark), var(--custom-primary));
+}
+.navbar-item .title, .navbar-item .subtitle, .navbar-item, .navbar-link {
+    color: var(--custom-primary-invert);
+}
+.navbar-burger span {
+    background-color: var(--custom-primary-invert);
+}
+.navbar-menu.is-active {
+    background-color: var(--custom-primary);
+}
+.navbar-menu .navbar-item:hover {
+    background-color: var(--custom-primary-dark);
 }
 
+.button.is-primary {
+    background-color: var(--custom-primary);
+    border-color: transparent;
+    color: var(--custom-primary-invert);
+}
+.button.is-primary:hover, .button.is-primary:focus {
+    background-color: var(--custom-primary-dark);
+    border-color: transparent;
+    color: var(--custom-primary-invert);
+}
+.button.is-primary.is-light {
+    background-color: #e6f3fa; 
+    color: var(--custom-primary-dark);
+}
+ .button.is-primary.is-light:hover {
+    background-color: #cfe7f5;
+}
+
+.button.is-link {
+    background-color: var(--custom-link);
+    color: var(--custom-primary-invert);
+}
+ .button.is-link:hover {
+    background-color: var(--custom-link-hover);
+}
+.button.is-link.is-light {
+    background-color: #e6f3fa;
+    color: var(--custom-link-hover);
+}
+.button.is-link.is-light:hover {
+     background-color: #cfe7f5;
+}
+.button.is-info.is-light {
+    background-color: #e6f7fb;
+    color: var(--custom-info);
+}
+ .button.is-info.is-light:hover {
+    background-color: #cceef7;
+}
+
+.has-text-primary { color: var(--custom-primary) !important; }
+.has-background-primary { background-color: var(--custom-primary) !important; }
+
+.modal-card-head.has-background-primary {
+    background: linear-gradient(135deg, var(--custom-primary-dark), var(--custom-primary));
+}
+.modal-card-title.has-text-white {
+    color: var(--custom-primary-invert) !important;
+}
+.delete:hover {
+    background-color: rgba(0,0,0,0.3) !important;
+}
+
+.task-status-buttons .button {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.task-status-buttons .button.is-active { 
+    background-color: var(--custom-link);
+    color: var(--custom-primary-invert);
+    border-color: var(--custom-link-hover);
+}
+ .task-status-buttons .button:not(.is-active) {
+    background-color: #fff;
+    border-color: #dbdbdb;
+    color: #363636;
+}
+ .task-status-buttons .button:not(.is-active):hover {
+    border-color: #b5b5b5;
+}
+
+.table-task-completed { background-color: #e6fffa !important; border-left: 4px solid #23d160 !important; } 
+.table-task-not-delivered { background-color: #fff5f5 !important; border-left: 4px solid #ff3860 !important; } 
+.table-task-analysis { background-color: #fffbeb !important; border-left: 4px solid #ffdd57 !important; } 
+.table-task-removed { background-color: #f5f5f5 !important; color: #7a7a7a !important; text-decoration: line-through; opacity: 0.7;}
+
+.stat-card {
+    background-color: #ffffff; 
+    padding: 1.25rem;
+    border-radius: 6px; 
+    box-shadow: 0 0.5em 1em -0.125em rgba(10,10,10,.1), 0 0 0 1px rgba(10,10,10,.02);
+    text-align: center;
+    border: 1px solid #dbdbdb; 
+}
+.stat-card-title {
+    font-size: 0.8rem;
+    color: #7a7a7a; 
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.stat-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--custom-primary); 
+}
+.stat-card.total-sprints .stat-card-value { color: var(--custom-primary); } 
+.stat-card.total-tasks .stat-card-value { color: #23d160; } 
+.stat-card.total-delivered-points .stat-card-value { color: var(--custom-info); } 
+.stat-card.avg-completion-rate .stat-card-value { color: #b86bff; } 
+
+.stat-card.avg-tasks .stat-card-value { color: #ffdd57; } 
+.stat-card.avg-points .stat-card-value { color: #23d160; }
+.stat-card.avg-points-per-task .stat-card-value { color: #ff3860; } 
+
+.dropdown-menu .bi {
+    margin-right: 0.5rem;
+}
 .hover-shadow:hover {
-  box-shadow: 0 0.75em 1.5em -0.125em rgba(10,10,10,.15), 0 0 0 1px rgba(10,10,10,.03);
+    box-shadow: 0 0.75em 1.5em -0.125em rgba(10,10,10,.15), 0 0 0 1px rgba(10,10,10,.03);
+}
+.sprint-card-clickable { cursor: pointer; }
+.modal-card-body {
+    max-height: calc(90vh - 120px); 
+    overflow-y: auto;
 }
 
-.sprint-card-clickable {
-  cursor: pointer;
+@media print {
+    html, body {
+        background-color: #fff !important; 
+        color: #000 !important; 
+        font-size: 10pt; 
+    }
+    .no-print, .modal-card-foot button:not(.print-this-section), .navbar, #addSprintBtn, #consolidatedReportBtn, .navbar-burger, #mobileMenu, .edit-sprint-btn, .delete-sprint-btn, #exportDataJsonBtn, #exportDataCsvBtn, #exportReportHtmlBtn, #importDataBtnTrigger, #dataActionsDropdown, #emailConfigBtn {
+        display: none !important;
+    }
+    .modal.is-active {
+        display: block !important;
+        position: static !important;
+        overflow: visible !important;
+        background: none !important;
+    }
+    .modal-card {
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+    .modal-card-head .delete { display: none !important; }
+    .modal-card-body { padding: 0 !important; overflow-y: visible !important; max-height: none !important;}
+    
+    .container, .section {
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .stat-card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    .table, th, td {
+        border: 1px solid #ccc !important;
+        page-break-inside: auto;
+    }
+    canvas {
+        max-width: 100% !important;
+        height: auto !important;
+        page-break-inside: avoid;
+    }
+    h1, h2, h3, h4, h5, h6, .title, .subtitle {
+        page-break-after: avoid;
+        color: #000 !important;
+    }
+    .list-group-item {page-break-inside: avoid;}
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; }
 }

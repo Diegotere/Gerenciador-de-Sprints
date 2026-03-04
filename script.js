@@ -1,73 +1,424 @@
-let sprints = [
-  { id: '1', name: '03/2026', startDate: '2026-03-02', endDate: '2026-03-21', manualPlannedPoints: 142, totalCollaborators: 'N/A', workingDays: 15, tasks: new Array(24).fill({}) },
-  { id: '2', name: '02/2026', startDate: '2026-02-02', endDate: '2026-02-20', manualPlannedPoints: 93, totalCollaborators: 8.5, workingDays: 15, tasks: new Array(21).fill({}) },
-  { id: '3', name: '01/2026', startDate: '2026-01-02', endDate: '2026-01-23', manualPlannedPoints: 110, totalCollaborators: 9.5, workingDays: 16, tasks: new Array(26).fill({}) }
-];
+const TASK_TYPES = ['Melhoria', 'Novo Recurso', 'Automação', 'Dívida Técnica', 'Erro', 'Proteção', 'Usabilidade','Legislação','Merge'];
+const TASK_STATUSES = ['Planejada', 'Incluída', 'Removida', 'Não entregue'];
+
+let sprints = [];
+let currentEditingSprintId = null;
+let tasksForCurrentSprintForm = [];
+let sprintToDeleteId = null;
+let editingTaskIndexInForm = null;
 
 const sprintGrid = document.getElementById('sprintGrid');
+const addSprintBtn = document.getElementById('addSprintBtn');
+const sprintModalEl = document.getElementById('sprintModal');
+const sprintModalTitleEl = document.getElementById('sprintModalTitleLabel');
+const sprintForm = document.getElementById('sprintForm');
+const sprintIdInput = document.getElementById('sprintId');
+const sprintNameInput = document.getElementById('sprintName');
+const sprintStartDateInput = document.getElementById('sprintStartDate');
+const sprintEndDateInput = document.getElementById('sprintEndDate');
+const sprintManualPlannedPointsInput = document.getElementById('sprintManualPlannedPoints');
+const sprintTotalCollaboratorsInput = document.getElementById('sprintTotalCollaborators');
+const sprintWorkingDaysInput = document.getElementById('sprintWorkingDays');
+const sprintObservationInput = document.getElementById('sprintObservation');
+const cancelSprintModalBtn = document.getElementById('cancelSprintModalBtn');
+const closeSprintModalXBtn = document.getElementById('closeSprintModalXBtn');
+const tasksContainerInForm = document.getElementById('tasksContainer');
+const taskFormTitleEl = document.getElementById('taskFormTitle');
+const editingTaskIndexInput = document.getElementById('editingTaskIndex');
+const taskNameInput = document.getElementById('taskName');
+const taskTypeSelect = document.getElementById('taskType');
+const taskPointsInput = document.getElementById('taskPoints');
+const taskObservationInput = document.getElementById('taskObservation');
+const taskIsCompletedCheckbox = document.getElementById('taskIsCompleted');
+const addOrUpdateTaskBtn = document.getElementById('addOrUpdateTaskBtn');
+const cancelTaskEditBtn = document.getElementById('cancelTaskEditBtn');
+const triggerImportTasksFileBtn = document.getElementById('triggerImportTasksFileBtn');
+const importTasksFileEl = document.getElementById('importTasksFile');
+const sprintReportModalEl = document.getElementById('sprintReportModal');
+const sprintReportModalTitleEl = document.getElementById('sprintReportModalTitleLabel');
+const sprintReportContent = document.getElementById('sprintReportContent');
+const printSprintReportBtn = document.getElementById('printSprintReportBtn');
+const closeSprintReportModalXBtn = document.getElementById('closeSprintReportModalXBtn');
+const consolidatedReportBtn = document.getElementById('consolidatedReportBtn');
+const consolidatedReportViewModalEl = document.getElementById('consolidatedReportViewModal');
+const consolidatedReportViewContent = document.getElementById('consolidatedReportViewContent');
+const printConsolidatedReportBtn = document.getElementById('printConsolidatedReportBtn');
+const closeConsolidatedReportViewModalXBtn = document.getElementById('closeConsolidatedReportViewModalXBtn');
+const deleteConfirmModalEl = document.getElementById('deleteConfirmModal');
+const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+const closeDeleteConfirmModalXBtn = document.getElementById('closeDeleteConfirmModalXBtn');
+const noSprintsMessage = document.getElementById('noSprintsMessage');
+const exportDataJsonBtn = document.getElementById('exportDataJsonBtn');
+const importDataBtnTrigger = document.getElementById('importDataBtnTrigger');
+const importFileEl = document.getElementById('importFile');
+const appNotificationEl = document.getElementById('appNotification');
+const notificationBodyEl = document.getElementById('notificationBody');
+const closeNotificationBtn = document.getElementById('closeNotificationBtn');
+const taskStatusButtonsContainer = document.getElementById('taskStatusButtonsContainer');
+let notificationTimeout;
 
-function handleEditSprintRequest(event) {
-  const sprintId = event.currentTarget.dataset.sprintId;
-  const sprint = sprints.find(item => item.id === sprintId);
-  if (!sprint) return;
+function normalizeString(str) { return (typeof str === 'string' ? str : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
 
-  alert(`Editar sprint: ${sprint.name}`);
+function showAppNotification(message, type = 'is-info') {
+  if (!appNotificationEl || !notificationBodyEl) return;
+  notificationBodyEl.textContent = message;
+  appNotificationEl.className = `notification ${type}`;
+  appNotificationEl.classList.remove('is-hidden');
+  clearTimeout(notificationTimeout);
+  notificationTimeout = setTimeout(() => appNotificationEl.classList.add('is-hidden'), 4500);
+}
+
+function openModal(el) { if (el) { el.classList.add('is-active'); document.documentElement.classList.add('is-clipped'); } }
+function closeModal(el) { if (el) el.classList.remove('is-active'); if (!document.querySelector('.modal.is-active')) document.documentElement.classList.remove('is-clipped'); }
+
+function loadSprints() {
+  try { sprints = JSON.parse(localStorage.getItem('sprints_data_v1') || '[]'); } catch { sprints = []; }
+}
+function saveSprints() { localStorage.setItem('sprints_data_v1', JSON.stringify(sprints)); }
+
+function calculateWorkingDaysBetweenDates(startDateStr, endDateStr) {
+  if (!startDateStr || !endDateStr) return 0;
+  const currentDate = new Date(`${startDateStr}T00:00:00`);
+  const endDate = new Date(`${endDateStr}T00:00:00`);
+  if (currentDate > endDate) return 0;
+  let count = 0;
+  while (currentDate <= endDate) {
+    const d = currentDate.getDay();
+    if (d !== 0 && d !== 6) count++;
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  return count;
+}
+
+function calculateSprintStats(sprint) {
+  const tasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
+  const ppm = Number(sprint.manualPlannedPoints) || 0;
+  const includedPoints = tasks.filter(t => t.status === 'Incluída').reduce((s, t) => s + (Number(t.points) || 0), 0);
+  const removedPoints = tasks.filter(t => t.status === 'Removida').reduce((s, t) => s + (Number(t.points) || 0), 0);
+  const notDeliveredPoints = tasks.filter(t => t.status !== 'Removida' && !t.isCompleted).reduce((s, t) => s + (Number(t.points) || 0), 0);
+  const tasksInScope = tasks.filter(t => t.status !== 'Removida');
+  const isGoalMet = tasksInScope.length > 0 && tasksInScope.every(t => t.isCompleted);
+  const deliveredPoints = (ppm + includedPoints) - (removedPoints + notDeliveredPoints);
+  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, sprintName: sprint.name || 'Sprint' };
+}
+
+function populateTaskFormElements() {
+  taskTypeSelect.innerHTML = TASK_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+  taskStatusButtonsContainer.innerHTML = TASK_STATUSES.map((s, i) => `<button type="button" class="button is-small ${i === 0 ? 'is-active' : ''}" data-status="${s}">${s}</button>`).join('');
+  taskStatusButtonsContainer.querySelectorAll('.button').forEach(btn => btn.addEventListener('click', () => {
+    taskStatusButtonsContainer.querySelectorAll('.button').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+  }));
+}
+
+function resetTaskForm() {
+  editingTaskIndexInForm = null;
+  editingTaskIndexInput.value = '';
+  taskFormTitleEl.textContent = 'Adicionar Nova Tarefa';
+  taskNameInput.value = '';
+  taskTypeSelect.value = TASK_TYPES[0];
+  taskPointsInput.value = '0';
+  taskObservationInput.value = '';
+  taskIsCompletedCheckbox.checked = false;
+  addOrUpdateTaskBtn.textContent = 'Adicionar Tarefa';
+  cancelTaskEditBtn.classList.add('is-hidden');
+  taskStatusButtonsContainer.querySelectorAll('.button').forEach((b, i) => b.classList.toggle('is-active', i === 0));
+}
+
+function renderTasksInSprintForm() {
+  tasksContainerInForm.innerHTML = '';
+  if (tasksForCurrentSprintForm.length === 0) {
+    tasksContainerInForm.innerHTML = '<p class="has-text-grey-light is-size-7 has-text-centered is-italic">Nenhuma tarefa adicionada a esta sprint ainda.</p>';
+    return;
+  }
+  tasksForCurrentSprintForm.forEach((task, index) => {
+    const el = document.createElement('div');
+    el.className = 'box p-3 mb-2 is-flex is-justify-content-space-between is-align-items-center';
+    el.innerHTML = `<div class="content is-small" style="flex-grow:1"><p class="has-text-weight-medium mb-0">${task.name}</p><p class="has-text-grey mb-0">(${task.points} pts, ${task.type}, ${task.status})</p></div><div class="buttons are-small"><button type="button" class="button is-info is-light" data-edit="${index}"><span class="icon"><i class="bi bi-pencil-square"></i></span></button><button type="button" class="button is-danger is-light" data-remove="${index}"><span class="icon"><i class="bi bi-trash3"></i></span></button></div>`;
+    tasksContainerInForm.appendChild(el);
+  });
+  tasksContainerInForm.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', () => { tasksForCurrentSprintForm.splice(Number(btn.dataset.remove), 1); renderTasksInSprintForm(); }));
+  tasksContainerInForm.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => {
+    const i = Number(btn.dataset.edit);
+    const t = tasksForCurrentSprintForm[i];
+    editingTaskIndexInForm = i;
+    taskFormTitleEl.textContent = 'Editar Tarefa';
+    taskNameInput.value = t.name;
+    taskTypeSelect.value = t.type;
+    taskPointsInput.value = t.points;
+    taskObservationInput.value = t.observation || '';
+    taskIsCompletedCheckbox.checked = !!t.isCompleted;
+    taskStatusButtonsContainer.querySelectorAll('.button').forEach(b => b.classList.toggle('is-active', b.dataset.status === t.status));
+    addOrUpdateTaskBtn.textContent = 'Atualizar Tarefa';
+    cancelTaskEditBtn.classList.remove('is-hidden');
+  }));
+}
+
+function openNewSprintModal() {
+  currentEditingSprintId = null;
+  sprintModalTitleEl.textContent = 'Nova Sprint';
+  sprintForm.reset();
+  sprintIdInput.value = '';
+  tasksForCurrentSprintForm = [];
+  renderTasksInSprintForm();
+  resetTaskForm();
+  openModal(sprintModalEl);
 }
 
 function renderSprints() {
   sprintGrid.innerHTML = '';
+  if (sprints.length === 0) {
+    noSprintsMessage.classList.remove('is-hidden');
+    sprintGrid.classList.add('is-hidden');
+    return;
+  }
+  noSprintsMessage.classList.add('is-hidden');
+  sprintGrid.classList.remove('is-hidden');
 
-  sprints.forEach(sprint => {
+  [...sprints].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
+    const stats = calculateSprintStats(sprint);
+    const displayIdentifier = sprint.name || (sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric'}) : 'Sprint');
+
     const columnDiv = document.createElement('div');
     columnDiv.className = 'column is-one-third-desktop is-half-tablet';
     columnDiv.innerHTML = `
-      <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="Editar sprint ${sprint.name}">
+      <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="Editar sprint ${displayIdentifier}">
         <header class="card-header" style="background-color: #00609C; box-shadow: none;">
           <p class="card-header-title has-text-white is-justify-content-space-between">
-            <span>${sprint.name}</span>
+            <span class="is-truncated" title="${displayIdentifier}">${displayIdentifier}</span>
             <span class="dropdown is-hoverable is-right">
               <span class="dropdown-trigger">
-                <button class="button is-small is-primary is-inverted is-outlined" aria-haspopup="true" aria-controls="dropdown-sprint-card" style="border: none; background-color: transparent !important;">
+                <button class="button is-small is-primary is-inverted is-outlined" aria-haspopup="true" aria-controls="dropdown-sprint-card" style="border:none;background-color:transparent !important;">
                   <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
                 </button>
               </span>
+              <span class="dropdown-menu" role="menu"><span class="dropdown-content"><a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a><a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a></span></span>
             </span>
           </p>
         </header>
-        <div class="card-content">
-          <div class="content is-small has-text-grey">
-            <p><strong>Início:</strong> ${new Date(sprint.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-            <p><strong>Fim:</strong> ${new Date(sprint.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-            <p><strong>Planejado:</strong> ${sprint.manualPlannedPoints} pts</p>
-            <p><strong>Colaboradores:</strong> ${sprint.totalCollaborators}</p>
-            <p><strong>Dias Úteis:</strong> ${sprint.workingDays}</p>
-            <p><strong>Tarefas:</strong> ${sprint.tasks.length}</p>
-          </div>
-        </div>
-        <footer class="card-footer">
-          <p class="card-footer-item has-text-success is-size-7 has-text-weight-semibold">Sprint Completa <i class="bi bi-check-circle-fill"></i></p>
-          <a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a>
-        </footer>
-      </div>
-    `;
+        <div class="card-content"><div class="content is-small has-text-grey">
+          <p><strong>Início:</strong> ${sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
+          <p><strong>Fim:</strong> ${sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
+          <p><strong>Planejado:</strong> ${sprint.manualPlannedPoints || 0} pts</p>
+          <p><strong>Colaboradores:</strong> ${sprint.totalCollaborators || 'N/A'}</p>
+          <p><strong>Dias Úteis:</strong> ${sprint.workingDays || 'N/A'}</p>
+          <p><strong>Tarefas:</strong> ${Array.isArray(sprint.tasks) ? sprint.tasks.length : 0}</p>
+        </div></div>
+        <footer class="card-footer"><p class="card-footer-item ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'} is-size-7 has-text-weight-semibold">${stats.isGoalMet ? 'Sprint Completa <i class="bi bi-check-circle-fill"></i>' : 'Sprint Incompleta <i class="bi bi-x-circle-fill"></i>'}</p><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
+      </div>`;
 
-    const cardEl = columnDiv.querySelector('.sprint-card-clickable');
-    cardEl.addEventListener('click', (event) => {
-      if (event.target.closest('.view-report-btn, .dropdown, .dropdown-trigger, button, a')) {
-        return;
-      }
-      handleEditSprintRequest({ currentTarget: cardEl });
+    const card = columnDiv.querySelector('.sprint-card-clickable');
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('.edit-sprint-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
+      handleEditSprintRequest({ currentTarget: card });
     });
-
-    cardEl.addEventListener('keydown', (event) => {
+    card.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        handleEditSprintRequest({ currentTarget: cardEl });
+        handleEditSprintRequest({ currentTarget: card });
       }
     });
 
     sprintGrid.appendChild(columnDiv);
   });
+
+  document.querySelectorAll('.edit-sprint-btn').forEach(btn => btn.addEventListener('click', handleEditSprintRequest));
+  document.querySelectorAll('.delete-sprint-btn').forEach(btn => btn.addEventListener('click', handleDeleteSprintRequest));
+  document.querySelectorAll('.view-report-btn').forEach(btn => btn.addEventListener('click', handleViewReportRequest));
 }
 
-document.addEventListener('DOMContentLoaded', renderSprints);
+function handleEditSprintRequest(e) {
+  const sprintId = e.currentTarget.dataset.sprintId;
+  const sprint = sprints.find(s => s.id === sprintId);
+  if (!sprint) return;
+  currentEditingSprintId = sprintId;
+  sprintModalTitleEl.textContent = 'Editar Sprint';
+  sprintIdInput.value = sprint.id;
+  sprintNameInput.value = sprint.name || '';
+  sprintStartDateInput.value = sprint.startDate || '';
+  sprintEndDateInput.value = sprint.endDate || '';
+  sprintManualPlannedPointsInput.value = sprint.manualPlannedPoints || 0;
+  sprintTotalCollaboratorsInput.value = sprint.totalCollaborators || 0;
+  sprintWorkingDaysInput.value = sprint.workingDays || 0;
+  sprintObservationInput.value = sprint.sprintObservation || '';
+  tasksForCurrentSprintForm = JSON.parse(JSON.stringify(Array.isArray(sprint.tasks) ? sprint.tasks : []));
+  renderTasksInSprintForm();
+  resetTaskForm();
+  openModal(sprintModalEl);
+}
+
+function handleDeleteSprintRequest(e) { sprintToDeleteId = e.currentTarget.dataset.sprintId; openModal(deleteConfirmModalEl); }
+
+function handleViewReportRequest(e) {
+  const sprint = sprints.find(s => s.id === e.currentTarget.dataset.sprintId);
+  if (!sprint) return;
+  const stats = calculateSprintStats(sprint);
+  sprintReportModalTitleEl.textContent = `Relatório: ${stats.sprintName}`;
+  const tasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
+  sprintReportContent.innerHTML = `<h3 class="title is-4 mb-4 ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'}">${stats.isGoalMet ? 'Sprint Batida!' : 'Sprint Não Batida'}</h3><p><strong>Pontos Planejados:</strong> ${stats.ppm}</p><p><strong>Pontos Entregues:</strong> ${stats.deliveredPoints}</p><div class="table-container mt-3"><table class="table is-fullwidth is-size-7"><thead><tr><th>Tarefa</th><th>Tipo</th><th>Pontos</th><th>Status</th><th>Concluída</th></tr></thead><tbody>${tasks.map(t => `<tr><td>${t.name}</td><td>${t.type}</td><td>${t.points}</td><td>${t.status}</td><td>${t.isCompleted ? 'Sim' : 'Não'}</td></tr>`).join('')}</tbody></table></div>`;
+  openModal(sprintReportModalEl);
+}
+
+function handleConsolidatedReport() {
+  if (sprints.length === 0) {
+    consolidatedReportViewContent.innerHTML = '<p class="has-text-centered has-text-grey is-italic">Nenhuma sprint cadastrada para gerar o resumo.</p>';
+  } else {
+    consolidatedReportViewContent.innerHTML = `<h3 class="title is-5 has-text-primary mb-3">Estatísticas Gerais</h3><p>Total de Sprints: <strong>${sprints.length}</strong></p><div class="mt-4">${sprints.map(s => { const st = calculateSprintStats(s); return `<div class="box"><strong>${s.name || 'Sprint'}</strong> — Entregue: ${st.deliveredPoints} pts</div>`; }).join('')}</div>`;
+  }
+  openModal(consolidatedReportViewModalEl);
+}
+
+async function exportDataToJson() {
+  if (!sprints.length) return showAppNotification('Não há dados para exportar.', 'is-warning');
+  const blob = new Blob([JSON.stringify(sprints, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sprints_backup_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showAppNotification('Dados exportados com sucesso!', 'is-success');
+}
+
+function handleImportData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      if (!Array.isArray(importedData)) throw new Error('JSON inválido');
+      if (confirm('Tem certeza que deseja substituir todos os dados atuais?')) {
+        sprints = importedData.map(s => ({ ...s, tasks: Array.isArray(s.tasks) ? s.tasks : [] }));
+        saveSprints();
+        renderSprints();
+        showAppNotification('Dados importados com sucesso!', 'is-success');
+      }
+    } catch (error) {
+      showAppNotification(`Erro ao processar JSON: ${error.message}`, 'is-danger');
+    } finally {
+      importFileEl.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function handleImportTasksFromFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const dataRows = rows.length && normalizeString(String(rows[0][0])).includes('nome da tarefa') ? rows.slice(1) : rows;
+      let count = 0;
+      dataRows.forEach(row => {
+        const name = String(row[0] || '').trim();
+        if (!name) return;
+        tasksForCurrentSprintForm.push({
+          id: crypto.randomUUID(),
+          name,
+          type: TASK_TYPES.find(t => normalizeString(t) === normalizeString(String(row[1] || ''))) || TASK_TYPES[0],
+          points: Math.max(0, parseInt(row[2], 10) || 0),
+          observation: String(row[3] || '').trim().slice(0, 100),
+          status: TASK_STATUSES.find(s => normalizeString(s) === normalizeString(String(row[4] || ''))) || TASK_STATUSES[0],
+          isCompleted: ['true','sim','1','yes','ok','concluído','concluido','concluida'].includes(normalizeString(String(row[5] || '')))
+        });
+        count++;
+      });
+      renderTasksInSprintForm();
+      showAppNotification(`${count} tarefa(s) importada(s).`, count ? 'is-success' : 'is-warning');
+    } catch (err) {
+      showAppNotification(`Erro ao importar planilha: ${err.message}`, 'is-danger');
+    } finally {
+      importTasksFileEl.value = '';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function updateWorkingDaysField() {
+  if (sprintStartDateInput.value && sprintEndDateInput.value && !currentEditingSprintId) sprintWorkingDaysInput.value = calculateWorkingDaysBetweenDates(sprintStartDateInput.value, sprintEndDateInput.value);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSprints();
+  populateTaskFormElements();
+  renderSprints();
+
+  closeNotificationBtn?.addEventListener('click', () => appNotificationEl.classList.add('is-hidden'));
+  addSprintBtn?.addEventListener('click', openNewSprintModal);
+  cancelSprintModalBtn?.addEventListener('click', () => closeModal(sprintModalEl));
+  closeSprintModalXBtn?.addEventListener('click', () => closeModal(sprintModalEl));
+  closeSprintReportModalXBtn?.addEventListener('click', () => closeModal(sprintReportModalEl));
+  closeConsolidatedReportViewModalXBtn?.addEventListener('click', () => closeModal(consolidatedReportViewModalEl));
+  cancelDeleteBtn?.addEventListener('click', () => closeModal(deleteConfirmModalEl));
+  closeDeleteConfirmModalXBtn?.addEventListener('click', () => closeModal(deleteConfirmModalEl));
+  consolidatedReportBtn?.addEventListener('click', handleConsolidatedReport);
+  exportDataJsonBtn?.addEventListener('click', exportDataToJson);
+  importDataBtnTrigger?.addEventListener('click', () => importFileEl.click());
+  importFileEl?.addEventListener('change', handleImportData);
+  triggerImportTasksFileBtn?.addEventListener('click', () => importTasksFileEl.click());
+  importTasksFileEl?.addEventListener('change', handleImportTasksFromFile);
+  sprintStartDateInput?.addEventListener('change', updateWorkingDaysField);
+  sprintEndDateInput?.addEventListener('change', updateWorkingDaysField);
+  printSprintReportBtn?.addEventListener('click', () => window.print());
+  printConsolidatedReportBtn?.addEventListener('click', () => window.print());
+
+  addOrUpdateTaskBtn?.addEventListener('click', () => {
+    const status = taskStatusButtonsContainer.querySelector('.is-active')?.dataset.status || TASK_STATUSES[0];
+    const taskData = { id: editingTaskIndexInForm !== null ? tasksForCurrentSprintForm[editingTaskIndexInForm].id : crypto.randomUUID(), name: taskNameInput.value.trim(), type: taskTypeSelect.value, points: parseInt(taskPointsInput.value, 10) || 0, observation: taskObservationInput.value.trim(), status, isCompleted: status === 'Removida' ? false : taskIsCompletedCheckbox.checked };
+    if (!taskData.name) return showAppNotification('O nome da tarefa é obrigatório.', 'is-warning');
+    if (editingTaskIndexInForm !== null) tasksForCurrentSprintForm[editingTaskIndexInForm] = taskData; else tasksForCurrentSprintForm.push(taskData);
+    renderTasksInSprintForm();
+    resetTaskForm();
+  });
+
+  cancelTaskEditBtn?.addEventListener('click', resetTaskForm);
+
+  sprintForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const sprintData = {
+      id: sprintIdInput.value || crypto.randomUUID(),
+      name: sprintNameInput.value.trim(),
+      startDate: sprintStartDateInput.value,
+      endDate: sprintEndDateInput.value,
+      manualPlannedPoints: parseInt(sprintManualPlannedPointsInput.value, 10) || 0,
+      totalCollaborators: parseFloat(sprintTotalCollaboratorsInput.value) || 0,
+      workingDays: parseInt(sprintWorkingDaysInput.value, 10) || 0,
+      sprintObservation: sprintObservationInput.value.trim(),
+      tasks: [...tasksForCurrentSprintForm]
+    };
+    if (!sprintData.name || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome e datas da sprint.', 'is-danger');
+    if (new Date(sprintData.startDate) > new Date(sprintData.endDate)) return showAppNotification('A data inicial não pode ser posterior à final.', 'is-danger');
+
+    if (currentEditingSprintId) {
+      const i = sprints.findIndex(s => s.id === currentEditingSprintId);
+      if (i !== -1) sprints[i] = sprintData;
+      showAppNotification('Sprint atualizada com sucesso!', 'is-success');
+    } else {
+      sprints.push(sprintData);
+      showAppNotification('Sprint adicionada com sucesso!', 'is-success');
+    }
+
+    saveSprints();
+    renderSprints();
+    closeModal(sprintModalEl);
+  });
+
+  confirmDeleteBtn?.addEventListener('click', () => {
+    if (sprintToDeleteId) {
+      sprints = sprints.filter(s => s.id !== sprintToDeleteId);
+      saveSprints();
+      renderSprints();
+      showAppNotification('Sprint excluída com sucesso.', 'is-success');
+    }
+    sprintToDeleteId = null;
+    closeModal(deleteConfirmModalEl);
+  });
+});
