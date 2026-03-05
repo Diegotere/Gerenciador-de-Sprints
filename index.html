@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="has-navbar-fixed-top">
+<head>
+    <link rel="shortcut icon" type="image/x-icon" href="./Prod.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Sprints - Faturamento</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="has-background-light">
+    <nav class="navbar is-primary has-shadow is-fixed-top" role="navigation" aria-label="main navigation">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#">
+                    <h1 class="title is-4 has-text-white">Gerenciador de Sprints</h1>
+                </a>
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="mainNavbarMenu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div id="mainNavbarMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <button id="addSprintBtn" class="button is-primary is-light">
+                                <span class="icon"><i class="bi bi-plus-circle-fill"></i></span>
+                                <span>Nova Sprint</span>
+                            </button>
+                            <button id="consolidatedReportBtn" class="button is-info is-light">
+                                <span class="icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                                <span id="consolidatedReportBtnText">Resumo das sprints</span>
+                            </button>
+                            <div class="dropdown is-hoverable is-right" id="dataActionsDropdown">
+                                <div class="dropdown-trigger">
+                                    <button class="button is-link is-light" aria-haspopup="true" aria-controls="dropdown-menu-data">
+                                        <span class="icon"><i class="bi bi-database-fill-gear"></i></span>
+                                        <span>Ações de Dados</span>
+                                        <span class="icon is-small"><i class="bi bi-chevron-down"></i></span>
+                                    </button>
+                                </div>
+                                <div class="dropdown-menu" id="dropdown-menu-data" role="menu">
+                                    <div class="dropdown-content">
+                                        <a href="#" class="dropdown-item" id="exportDataJsonBtn"><i class="bi bi-filetype-json me-2"></i>Exportar Dados (JSON)</a>
+                                        <hr class="dropdown-divider">
+                                        <a href="#" class="dropdown-item" id="importDataBtnTrigger"><i class="bi bi-box-arrow-up me-2"></i>Importar Dados (JSON)</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <input type="file" id="importFile" accept=".json" class="is-hidden">
+
+    <section class="section">
+        <div class="container">
+            <main id="sprintGrid" class="columns is-multiline is-variable is-4"></main>
+            <div id="noSprintsMessage" class="is-hidden has-text-centered py-6 card mt-4">
+                <div class="card-content">
+                    <p class="icon is-large has-text-grey-light"><i class="bi bi-folder-x" style="font-size: 3rem;"></i></p>
+                    <p class="title is-5 has-text-grey">Nenhuma sprint cadastrada</p>
+                    <p class="subtitle is-6 has-text-grey-light">Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="modal" id="sprintModal">
+        <div class="modal-background"></div>
+        <div class="modal-card" style="width: 960px; max-width: 95vw;">
+            <form id="sprintForm">
+                <header class="modal-card-head has-background-primary">
+                    <p class="modal-card-title has-text-white" id="sprintModalTitleLabel">Nova Sprint</p>
+                    <button class="delete" aria-label="close" id="closeSprintModalXBtn"></button>
+                </header>
+                <section class="modal-card-body">
+                    <input type="hidden" id="sprintId">
+                    <div class="columns">
+                        <div class="column is-two-thirds">
+                            <div class="field">
+                                <label for="sprintName" class="label">Nome da Sprint</label>
+                                <div class="control">
+                                    <input type="text" id="sprintName" required class="input" placeholder="Ex: Sprint Alpha - Melhorias UI">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-one-third">
+                            <div class="field">
+                                <label for="sprintSemester" class="label">Semestre</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="sprintSemester" required>
+                                            <option value="" selected disabled>Selecione</option>
+                                            <option value="1° Semestre">1° Semestre</option>
+                                            <option value="2° Semestre">2° Semestre</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <div class="field">
+                                <label for="sprintStartDate" class="label">Data Inicial</label>
+                                <div class="control">
+                                    <input type="date" id="sprintStartDate" required class="input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column">
+                             <div class="field">
+                                <label for="sprintEndDate" class="label">Data Final</label>
+                                <div class="control">
+                                    <input type="date" id="sprintEndDate" required class="input">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <div class="field">
+                                <label for="sprintManualPlannedPoints" class="label">Pontos Planejados (Manual)</label>
+                                <div class="control">
+                                    <input type="number" id="sprintManualPlannedPoints" min="0" value="0" required class="input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column">
+                             <div class="field">
+                                <label for="sprintTotalCollaborators" class="label">Total de Colaboradores</label>
+                                <div class="control">
+                                    <input type="number" id="sprintTotalCollaborators" min="0" step="0.01" value="0" class="input">
+                                </div>
+                            </div>
+                        </div>
+                         <div class="column">
+                             <div class="field">
+                                <label for="sprintWorkingDays" class="label">Dias Úteis</label>
+                                <div class="control">
+                                    <input type="number" id="sprintWorkingDays" min="0" step="1" value="0" class="input">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="field mb-5">
+                        <label for="sprintObservation" class="label">Observação da Sprint</label>
+                        <div class="control">
+                            <textarea id="sprintObservation" class="textarea" placeholder="Observações gerais sobre a sprint (máx 200 chars)" maxlength="200" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h3 class="title is-5 has-text-primary">Tarefas da Sprint</h3>
+                    <div id="tasksContainer" class="mb-3 content" style="max-height: 250px; overflow-y: auto; padding-right:10px;"></div>
+                    <div class="box has-background-light">
+                        <h4 class="subtitle is-6" id="taskFormTitle">Adicionar Nova Tarefa</h4>
+                        <input type="hidden" id="editingTaskIndex"> 
+                        <div class="field"><div class="control"><input type="text" id="taskName" placeholder="Nome da Tarefa" class="input is-small"></div></div>
+                        <div class="columns is-mobile">
+                            <div class="column"><div class="control"><div class="select is-small is-fullwidth"><select id="taskType"></select></div></div></div>
+                            <div class="column"><div class="control"><input type="number" id="taskPoints" min="0" value="0" placeholder="Pontos" class="input is-small"></div></div>
+                        </div>
+                        <div class="field"><div class="control"><textarea id="taskObservation" placeholder="Observação (máx 100 chars)" maxlength="100" class="textarea is-small" rows="2"></textarea></div></div>
+                        <div class="field task-status-buttons"><label class="label is-small">Status:</label><div class="buttons are-small has-addons" id="taskStatusButtonsContainer"></div></div>
+                        <div class="field"><div class="control"><label class="checkbox"><input type="checkbox" id="taskIsCompleted"> Tarefa Concluída?</label></div></div>
+                        <div class="field is-grouped mt-3">
+                            <div class="control"><button type="button" id="addOrUpdateTaskBtn" class="button is-link is-small">Adicionar Tarefa</button></div>
+                            <div class="control"><button type="button" id="cancelTaskEditBtn" class="button is-light is-small is-hidden">Cancelar Edição</button></div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="field">
+                        <label class="label">Importar Tarefas de Planilha (.xls, .xlsx)</label>
+                        <div class="control">
+                            <button type="button" id="triggerImportTasksFileBtn" class="button is-info is-outlined is-fullwidth">
+                                <span class="icon"><i class="bi bi-file-earmark-arrow-up-fill"></i></span>
+                                <span>Selecionar Planilha para Importar Tarefas</span>
+                            </button>
+                            <input type="file" id="importTasksFile" accept=".xls,.xlsx" class="is-hidden">
+                        </div>
+                        <p class="help is-size-7">Colunas esperadas: Nome da Tarefa, Tipo, Pontos, Observação, Status, Concluída?</p>
+                    </div>
+                </section>
+                <footer class="modal-card-foot is-justify-content-flex-end">
+                    <button type="button" id="cancelSprintModalBtn" class="button">Cancelar</button>
+                    <button type="submit" class="button is-primary">Salvar Sprint</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="sprintReportModal"><div class="modal-background"></div><div class="modal-card" style="width: 1100px; max-width: 95vw;"><header class="modal-card-head has-background-primary"><p class="modal-card-title has-text-white" id="sprintReportModalTitleLabel">Relatório da Sprint</p><button type="button" id="printSprintReportBtn" class="button is-light is-small print-this-section"><span class="icon"><i class="bi bi-printer-fill"></i></span><span>Imprimir</span></button><button class="delete" aria-label="close" id="closeSprintReportModalXBtn"></button></header><section class="modal-card-body" id="sprintReportContent"></section></div></div>
+
+    <div class="modal" id="consolidatedReportViewModal"><div class="modal-background"></div><div class="modal-card" style="width: 1200px; max-width: 95vw;"><header class="modal-card-head has-background-primary"><p class="modal-card-title has-text-white" id="consolidatedReportModalTitleLabel">Resumo das sprints</p><div class="buttons are-small ml-auto"><button type="button" id="printConsolidatedReportBtn" class="button is-light print-this-section"><span class="icon"><i class="bi bi-printer-fill"></i></span><span>Imprimir</span></button></div><button class="delete" aria-label="close" id="closeConsolidatedReportViewModalXBtn"></button></header><section class="modal-card-body" id="consolidatedReportViewContent"></section></div></div>
+
+    <div class="modal" id="deleteConfirmModal"><div class="modal-background"></div><div class="modal-card" style="max-width: 480px;"><header class="modal-card-head"><p class="modal-card-title">Confirmar Exclusão</p><button class="delete" aria-label="close" id="closeDeleteConfirmModalXBtn"></button></header><section class="modal-card-body"><p>Tem certeza que deseja excluir esta sprint e todas as suas tarefas? Esta ação não pode ser desfeita.</p></section><footer class="modal-card-foot is-justify-content-flex-end"><button id="cancelDeleteBtn" type="button" class="button">Cancelar</button><button id="confirmDeleteBtn" type="button" class="button is-danger">Excluir</button></footer></div></div>
+    
+    <div id="appNotification" class="notification is-hidden" style="position: fixed; top: 70px; right: 20px; z-index: 1100; min-width: 300px;"><button class="delete" id="closeNotificationBtn"></button><span id="notificationBody"></span></div>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
