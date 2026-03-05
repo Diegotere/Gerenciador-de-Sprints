@@ -19,6 +19,7 @@ const sprintModalTitleEl = document.getElementById('sprintModalTitleLabel');
 const sprintForm = document.getElementById('sprintForm');
 const sprintIdInput = document.getElementById('sprintId');
 const sprintNameInput = document.getElementById('sprintName');
+const sprintSemesterInput = document.getElementById('sprintSemester');
 const sprintStartDateInput = document.getElementById('sprintStartDate');
 const sprintEndDateInput = document.getElementById('sprintEndDate');
 const sprintManualPlannedPointsInput = document.getElementById('sprintManualPlannedPoints');
@@ -100,6 +101,13 @@ function calculateWorkingDaysBetweenDates(startDateStr, endDateStr) {
   return count;
 }
 
+
+function inferSemesterFromDate(dateStr) {
+  if (!dateStr) return '';
+  const month = new Date(`${dateStr}T00:00:00`).getMonth() + 1;
+  return month <= 6 ? '1° Semestre' : '2° Semestre';
+}
+
 function calculateSprintStats(sprint) {
   const tasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
   const ppm = Number(sprint.manualPlannedPoints) || 0;
@@ -169,6 +177,7 @@ function openNewSprintModal() {
   sprintModalTitleEl.textContent = 'Nova Sprint';
   sprintForm.reset();
   sprintIdInput.value = '';
+  if (sprintSemesterInput) sprintSemesterInput.value = '';
   tasksForCurrentSprintForm = [];
   renderTasksInSprintForm();
   resetTaskForm();
@@ -245,6 +254,7 @@ function handleEditSprintRequest(e) {
   sprintModalTitleEl.textContent = 'Editar Sprint';
   sprintIdInput.value = sprint.id;
   sprintNameInput.value = sprint.name || '';
+  if (sprintSemesterInput) sprintSemesterInput.value = sprint.semester || inferSemesterFromDate(sprint.startDate);
   sprintStartDateInput.value = sprint.startDate || '';
   sprintEndDateInput.value = sprint.endDate || '';
   sprintManualPlannedPointsInput.value = sprint.manualPlannedPoints || 0;
@@ -538,6 +548,9 @@ function handleImportTasksFromFile(event) {
 
 function updateWorkingDaysField() {
   if (sprintStartDateInput.value && sprintEndDateInput.value && !currentEditingSprintId) sprintWorkingDaysInput.value = calculateWorkingDaysBetweenDates(sprintStartDateInput.value, sprintEndDateInput.value);
+  if (!currentEditingSprintId && sprintSemesterInput && sprintStartDateInput.value && !sprintSemesterInput.value) {
+    sprintSemesterInput.value = inferSemesterFromDate(sprintStartDateInput.value);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -587,6 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sprintData = {
       id: sprintIdInput.value || crypto.randomUUID(),
       name: sprintNameInput.value.trim(),
+      semester: sprintSemesterInput?.value || '',
       startDate: sprintStartDateInput.value,
       endDate: sprintEndDateInput.value,
       manualPlannedPoints: parseInt(sprintManualPlannedPointsInput.value, 10) || 0,
@@ -595,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sprintObservation: sprintObservationInput.value.trim(),
       tasks: [...tasksForCurrentSprintForm]
     };
-    if (!sprintData.name || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome e datas da sprint.', 'is-danger');
+    if (!sprintData.name || !sprintData.semester || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome, semestre e datas da sprint.', 'is-danger');
     if (new Date(sprintData.startDate) > new Date(sprintData.endDate)) return showAppNotification('A data inicial não pode ser posterior à final.', 'is-danger');
 
     if (currentEditingSprintId) {

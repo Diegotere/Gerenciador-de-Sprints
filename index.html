@@ -88,10 +88,28 @@
                 </header>
                 <section class="modal-card-body">
                     <input type="hidden" id="sprintId">
-                    <div class="field">
-                        <label for="sprintName" class="label">Nome da Sprint</label>
-                        <div class="control">
-                            <input type="text" id="sprintName" required class="input" placeholder="Ex: Sprint Alpha - Melhorias UI">
+                    <div class="columns">
+                        <div class="column is-two-thirds">
+                            <div class="field">
+                                <label for="sprintName" class="label">Nome da Sprint</label>
+                                <div class="control">
+                                    <input type="text" id="sprintName" required class="input" placeholder="Ex: Sprint Alpha - Melhorias UI">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-one-third">
+                            <div class="field">
+                                <label for="sprintSemester" class="label">Semestre</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="sprintSemester" required>
+                                            <option value="" selected disabled>Selecione</option>
+                                            <option value="1° Semestre">1° Semestre</option>
+                                            <option value="2° Semestre">2° Semestre</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="columns">
