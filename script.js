@@ -109,7 +109,7 @@ function calculateSprintStats(sprint) {
   const tasksInScope = tasks.filter(t => t.status !== 'Removida');
   const isGoalMet = tasksInScope.length > 0 && tasksInScope.every(t => t.isCompleted);
   const deliveredPoints = (ppm + includedPoints) - (removedPoints + notDeliveredPoints);
-  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, sprintName: sprint.name || 'Sprint' };
+  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
 }
 
 function populateTaskFormElements() {
@@ -321,6 +321,7 @@ function handleViewReportRequest(e) {
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Removidos</p><p class="title is-5 mb-0">${stats.removedPoints || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Não Entregues</p><p class="title is-5 has-text-danger mb-0">${stats.notDeliveredPoints || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Entregues</p><p class="title is-5 has-text-success mb-0">${stats.deliveredPoints || 0}</p></div></div>
+        <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Total de Tarefas</p><p class="title is-5 mb-0">${stats.totalTasks || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Entregue o Planejado?</p><p class="title is-5 ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'} mb-0">${stats.isGoalMet ? 'Sim' : 'Não'}</p></div></div>
       </div>
     </div>
