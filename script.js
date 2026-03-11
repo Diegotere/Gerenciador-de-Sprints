@@ -130,12 +130,23 @@ function calculateSprintStats(sprint) {
   return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
 }
 
+function updateTaskCompletedStateByStatus(status) {
+  if (!taskIsCompletedCheckbox) return;
+  if (status === 'Removida' || status === 'Não entregue') {
+    taskIsCompletedCheckbox.checked = false;
+    taskIsCompletedCheckbox.disabled = true;
+    return;
+  }
+  taskIsCompletedCheckbox.disabled = false;
+}
+
 function populateTaskFormElements() {
   taskTypeSelect.innerHTML = TASK_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
   taskStatusButtonsContainer.innerHTML = TASK_STATUSES.map((s, i) => `<button type="button" class="button is-small ${i === 0 ? 'is-active' : ''}" data-status="${s}">${s}</button>`).join('');
   taskStatusButtonsContainer.querySelectorAll('.button').forEach(btn => btn.addEventListener('click', () => {
     taskStatusButtonsContainer.querySelectorAll('.button').forEach(b => b.classList.remove('is-active'));
     btn.classList.add('is-active');
+    updateTaskCompletedStateByStatus(btn.dataset.status);
   }));
 }
 
@@ -148,6 +159,7 @@ function resetTaskForm() {
   taskPointsInput.value = '0';
   taskObservationInput.value = '';
   taskIsCompletedCheckbox.checked = false;
+  taskIsCompletedCheckbox.disabled = false;
   addOrUpdateTaskBtn.textContent = 'Adicionar Tarefa';
   cancelTaskEditBtn.classList.add('is-hidden');
   taskStatusButtonsContainer.querySelectorAll('.button').forEach((b, i) => b.classList.toggle('is-active', i === 0));
@@ -177,6 +189,7 @@ function renderTasksInSprintForm() {
     taskObservationInput.value = t.observation || '';
     taskIsCompletedCheckbox.checked = !!t.isCompleted;
     taskStatusButtonsContainer.querySelectorAll('.button').forEach(b => b.classList.toggle('is-active', b.dataset.status === t.status));
+    updateTaskCompletedStateByStatus(t.status);
     addOrUpdateTaskBtn.textContent = 'Atualizar Tarefa';
     cancelTaskEditBtn.classList.remove('is-hidden');
   }));
@@ -585,7 +598,11 @@ function handleImportTasksFromFile(event) {
           points: Math.max(0, parseInt(row[2], 10) || 0),
           observation: String(row[3] || '').trim().slice(0, 100),
           status: TASK_STATUSES.find(s => normalizeString(s) === normalizeString(String(row[4] || ''))) || TASK_STATUSES[0],
-          isCompleted: ['true','sim','1','yes','ok','concluído','concluido','concluida'].includes(normalizeString(String(row[5] || '')))
+          isCompleted: (() => {
+            const importedCompleted = ['true','sim','1','yes','ok','concluído','concluido','concluida'].includes(normalizeString(String(row[5] || '')));
+            const normalizedStatus = normalizeString(String(row[4] || ''));
+            return (normalizedStatus === normalizeString('Removida') || normalizedStatus === normalizeString('Não entregue')) ? false : importedCompleted;
+          })()
         });
         count++;
       });
@@ -645,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   addOrUpdateTaskBtn?.addEventListener('click', () => {
     const status = taskStatusButtonsContainer.querySelector('.is-active')?.dataset.status || TASK_STATUSES[0];
-    const taskData = { id: editingTaskIndexInForm !== null ? tasksForCurrentSprintForm[editingTaskIndexInForm].id : crypto.randomUUID(), name: taskNameInput.value.trim(), type: taskTypeSelect.value, points: parseInt(taskPointsInput.value, 10) || 0, observation: taskObservationInput.value.trim(), status, isCompleted: status === 'Removida' ? false : taskIsCompletedCheckbox.checked };
+    const taskData = { id: editingTaskIndexInForm !== null ? tasksForCurrentSprintForm[editingTaskIndexInForm].id : crypto.randomUUID(), name: taskNameInput.value.trim(), type: taskTypeSelect.value, points: parseInt(taskPointsInput.value, 10) || 0, observation: taskObservationInput.value.trim(), status, isCompleted: (status === 'Removida' || status === 'Não entregue') ? false : taskIsCompletedCheckbox.checked };
     if (!taskData.name) return showAppNotification('O nome da tarefa é obrigatório.', 'is-warning');
 
     if (isTaskNameDuplicateInCurrentSprint(taskData.name, editingTaskIndexInForm)) {
