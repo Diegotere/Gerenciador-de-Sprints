@@ -71,6 +71,15 @@ if (window.Chart && window.ChartDataLabels) {
 
 function normalizeString(str) { return (typeof str === 'string' ? str : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
 
+function isTaskNameDuplicateInCurrentSprint(taskName, taskIndexToIgnore = null) {
+  const normalizedTaskNameToValidate = normalizeString(String(taskName || '').trim());
+  if (!normalizedTaskNameToValidate) return false;
+  return tasksForCurrentSprintForm.some((task, index) => {
+    if (taskIndexToIgnore !== null && index === taskIndexToIgnore) return false;
+    return normalizeString(String(task.name || '').trim()) === normalizedTaskNameToValidate;
+  });
+}
+
 function showAppNotification(message, type = 'is-info') {
   if (!appNotificationEl || !notificationBodyEl) return;
   notificationBodyEl.textContent = message;
@@ -559,9 +568,16 @@ function handleImportTasksFromFile(event) {
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
       const dataRows = rows.length && normalizeString(String(rows[0][0])).includes('nome da tarefa') ? rows.slice(1) : rows;
       let count = 0;
+      let skippedDuplicates = 0;
       dataRows.forEach(row => {
         const name = String(row[0] || '').trim();
         if (!name) return;
+
+        if (isTaskNameDuplicateInCurrentSprint(name)) {
+          skippedDuplicates++;
+          return;
+        }
+
         tasksForCurrentSprintForm.push({
           id: crypto.randomUUID(),
           name,
@@ -574,7 +590,11 @@ function handleImportTasksFromFile(event) {
         count++;
       });
       renderTasksInSprintForm();
-      showAppNotification(`${count} tarefa(s) importada(s).`, count ? 'is-success' : 'is-warning');
+      if (skippedDuplicates > 0) {
+        showAppNotification(`${count} tarefa(s) importada(s). ${skippedDuplicates} duplicada(s) ignorada(s).`, count ? 'is-warning' : 'is-danger');
+      } else {
+        showAppNotification(`${count} tarefa(s) importada(s).`, count ? 'is-success' : 'is-warning');
+      }
     } catch (err) {
       showAppNotification(`Erro ao importar planilha: ${err.message}`, 'is-danger');
     } finally {
@@ -627,6 +647,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const status = taskStatusButtonsContainer.querySelector('.is-active')?.dataset.status || TASK_STATUSES[0];
     const taskData = { id: editingTaskIndexInForm !== null ? tasksForCurrentSprintForm[editingTaskIndexInForm].id : crypto.randomUUID(), name: taskNameInput.value.trim(), type: taskTypeSelect.value, points: parseInt(taskPointsInput.value, 10) || 0, observation: taskObservationInput.value.trim(), status, isCompleted: status === 'Removida' ? false : taskIsCompletedCheckbox.checked };
     if (!taskData.name) return showAppNotification('O nome da tarefa é obrigatório.', 'is-warning');
+
+    if (isTaskNameDuplicateInCurrentSprint(taskData.name, editingTaskIndexInForm)) {
+      return showAppNotification(`A tarefa "${taskData.name}" já existe nesta sprint.`, 'is-danger');
+    }
+
     if (editingTaskIndexInForm !== null) tasksForCurrentSprintForm[editingTaskIndexInForm] = taskData; else tasksForCurrentSprintForm.push(taskData);
     renderTasksInSprintForm();
     resetTaskForm();
