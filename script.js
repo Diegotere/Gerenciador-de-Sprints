@@ -56,6 +56,9 @@ const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 const closeDeleteConfirmModalXBtn = document.getElementById('closeDeleteConfirmModalXBtn');
 const noSprintsMessage = document.getElementById('noSprintsMessage');
+const noSprintsTitle = document.getElementById('noSprintsTitle');
+const noSprintsSubtitle = document.getElementById('noSprintsSubtitle');
+const semesterFilterSelect = document.getElementById('semesterFilter');
 const exportDataJsonBtn = document.getElementById('exportDataJsonBtn');
 const importDataBtnTrigger = document.getElementById('importDataBtnTrigger');
 const importFileEl = document.getElementById('importFile');
@@ -118,6 +121,16 @@ function inferSemesterFromDate(dateStr) {
   return month <= 6 ? '1° Semestre' : '2° Semestre';
 }
 
+function getSprintSemester(sprint) {
+  return sprint.semester || inferSemesterFromDate(sprint.startDate);
+}
+
+function getFilteredSprints() {
+  const selectedSemester = semesterFilterSelect?.value || 'all';
+  if (selectedSemester === 'all') return sprints;
+  return sprints.filter((sprint) => getSprintSemester(sprint) === selectedSemester);
+}
+
 function calculateSprintStats(sprint) {
   const tasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
   const ppm = Number(sprint.manualPlannedPoints) || 0;
@@ -125,9 +138,14 @@ function calculateSprintStats(sprint) {
   const removedPoints = tasks.filter(t => t.status === 'Removida').reduce((s, t) => s + (Number(t.points) || 0), 0);
   const notDeliveredPoints = tasks.filter(t => t.status !== 'Removida' && !t.isCompleted).reduce((s, t) => s + (Number(t.points) || 0), 0);
   const tasksInScope = tasks.filter(t => t.status !== 'Removida');
-  const isGoalMet = tasksInScope.length > 0 && tasksInScope.every(t => t.isCompleted);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const endDate = sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`) : null;
+  const hasEnded = !!(endDate && !Number.isNaN(endDate.getTime()) && today > endDate);
+  const isGoalMet = hasEnded && tasksInScope.length > 0 && tasksInScope.every(t => t.isCompleted);
+  const sprintOutcome = !hasEnded ? 'ongoing' : isGoalMet ? 'complete' : 'incomplete';
   const deliveredPoints = (ppm + includedPoints) - (removedPoints + notDeliveredPoints);
-  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
+  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, hasEnded, sprintOutcome, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
 }
 
 function updateTaskCompletedStateByStatus(status) {
@@ -209,15 +227,26 @@ function openNewSprintModal() {
 
 function renderSprints() {
   sprintGrid.innerHTML = '';
-  if (sprints.length === 0) {
+  const filteredSprints = getFilteredSprints();
+
+  if (filteredSprints.length === 0) {
+    if (sprints.length === 0) {
+      if (noSprintsTitle) noSprintsTitle.textContent = 'Nenhuma sprint cadastrada';
+      if (noSprintsSubtitle) noSprintsSubtitle.textContent = 'Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".';
+    } else {
+      const selectedSemester = semesterFilterSelect?.value;
+      if (noSprintsTitle) noSprintsTitle.textContent = 'Nenhuma sprint encontrada para o filtro selecionado';
+      if (noSprintsSubtitle) noSprintsSubtitle.textContent = selectedSemester === 'all' ? 'Ajuste os filtros para visualizar suas sprints.' : `Não há sprints cadastradas para ${selectedSemester}.`;
+    }
     noSprintsMessage.classList.remove('is-hidden');
     sprintGrid.classList.add('is-hidden');
     return;
   }
+
   noSprintsMessage.classList.add('is-hidden');
   sprintGrid.classList.remove('is-hidden');
 
-  [...sprints].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
+  [...filteredSprints].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
     const stats = calculateSprintStats(sprint);
     const displayIdentifier = sprint.name || (sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric'}) : 'Sprint');
 
@@ -246,7 +275,7 @@ function renderSprints() {
           <p><strong>Dias Úteis:</strong> ${sprint.workingDays || 'N/A'}</p>
           <p><strong>Tarefas:</strong> ${Array.isArray(sprint.tasks) ? sprint.tasks.length : 0}</p>
         </div></div>
-        <footer class="card-footer"><p class="card-footer-item ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'} is-size-7 has-text-weight-semibold">${stats.isGoalMet ? 'Sprint Completa <i class="bi bi-check-circle-fill"></i>' : 'Sprint Incompleta <i class="bi bi-x-circle-fill"></i>'}</p><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
+        <footer class="card-footer"><p class="card-footer-item ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'} is-size-7 has-text-weight-semibold">${stats.sprintOutcome === 'complete' ? 'Sprint Completa <i class="bi bi-check-circle-fill"></i>' : stats.sprintOutcome === 'incomplete' ? 'Sprint Incompleta <i class="bi bi-x-circle-fill"></i>' : 'Sprint em andamento <i class="bi bi-hourglass-split"></i>'}</p><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
       </div>`;
 
     const card = columnDiv.querySelector('.sprint-card-clickable');
@@ -344,7 +373,7 @@ function handleViewReportRequest(e) {
     : '';
 
   sprintReportContent.innerHTML = `
-    <h3 class="title is-4 mb-5 ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'}">${stats.isGoalMet ? 'Sprint Batida!' : 'Sprint Não Batida'}</h3>
+    <h3 class="title is-4 mb-5 ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'}">${stats.sprintOutcome === 'complete' ? 'Sprint Batida!' : stats.sprintOutcome === 'incomplete' ? 'Sprint Não Batida' : 'Sprint em andamento'}</h3>
     ${sprintObservationHtml}
     <div class="mb-5">
       <h4 class="subtitle is-5 has-text-primary mb-3">Resumo da Sprint</h4>
@@ -355,7 +384,7 @@ function handleViewReportRequest(e) {
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Não Entregues</p><p class="title is-5 has-text-danger mb-0">${stats.notDeliveredPoints || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Entregues</p><p class="title is-5 has-text-success mb-0">${stats.deliveredPoints || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Total de Tarefas</p><p class="title is-5 mb-0">${stats.totalTasks || 0}</p></div></div>
-        <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Entregue o Planejado?</p><p class="title is-5 ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'} mb-0">${stats.isGoalMet ? 'Sim' : 'Não'}</p></div></div>
+        <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Entregue o Planejado?</p><p class="title is-5 ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'} mb-0">${stats.sprintOutcome === 'complete' ? 'Sim' : stats.sprintOutcome === 'incomplete' ? 'Não' : 'Em andamento'}</p></div></div>
       </div>
     </div>
     <div>
@@ -657,6 +686,7 @@ document.addEventListener('DOMContentLoaded', () => {
   importTasksFileEl?.addEventListener('change', handleImportTasksFromFile);
   sprintStartDateInput?.addEventListener('change', updateWorkingDaysField);
   sprintEndDateInput?.addEventListener('change', updateWorkingDaysField);
+  semesterFilterSelect?.addEventListener('change', renderSprints);
   printSprintReportBtn?.addEventListener('click', () => printReport('sprintReportContent'));
   printConsolidatedReportBtn?.addEventListener('click', () => printReport('consolidatedReportViewContent'));
 
