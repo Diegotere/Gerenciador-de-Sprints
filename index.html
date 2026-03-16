@@ -67,12 +67,24 @@
 
     <section class="section">
         <div class="container">
+            <div class="field mb-4" style="max-width: 280px;">
+                <label class="label" for="semesterFilter">Filtrar por semestre</label>
+                <div class="control">
+                    <div class="select is-fullwidth">
+                        <select id="semesterFilter">
+                            <option value="all">Todos os semestres</option>
+                            <option value="1° Semestre">1° Semestre</option>
+                            <option value="2° Semestre">2° Semestre</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <main id="sprintGrid" class="columns is-multiline is-variable is-4"></main>
             <div id="noSprintsMessage" class="is-hidden has-text-centered py-6 card mt-4">
                 <div class="card-content">
                     <p class="icon is-large has-text-grey-light"><i class="bi bi-folder-x" style="font-size: 3rem;"></i></p>
-                    <p class="title is-5 has-text-grey">Nenhuma sprint cadastrada</p>
-                    <p class="subtitle is-6 has-text-grey-light">Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".</p>
+                    <p id="noSprintsTitle" class="title is-5 has-text-grey">Nenhuma sprint cadastrada</p>
+                    <p id="noSprintsSubtitle" class="subtitle is-6 has-text-grey-light">Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".</p>
                 </div>
             </div>
         </div>
