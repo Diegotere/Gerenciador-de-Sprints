@@ -20,6 +20,7 @@ const sprintModalTitleEl = document.getElementById('sprintModalTitleLabel');
 const sprintForm = document.getElementById('sprintForm');
 const sprintIdInput = document.getElementById('sprintId');
 const sprintNameInput = document.getElementById('sprintName');
+const sprintTeamInput = document.getElementById('sprintTeam');
 const sprintSemesterInput = document.getElementById('sprintSemester');
 const sprintStartDateInput = document.getElementById('sprintStartDate');
 const sprintEndDateInput = document.getElementById('sprintEndDate');
@@ -58,6 +59,7 @@ const closeDeleteConfirmModalXBtn = document.getElementById('closeDeleteConfirmM
 const noSprintsMessage = document.getElementById('noSprintsMessage');
 const noSprintsTitle = document.getElementById('noSprintsTitle');
 const noSprintsSubtitle = document.getElementById('noSprintsSubtitle');
+const teamFilterSelect = document.getElementById('teamFilter');
 const semesterFilterSelect = document.getElementById('semesterFilter');
 const exportDataJsonBtn = document.getElementById('exportDataJsonBtn');
 const importDataBtnTrigger = document.getElementById('importDataBtnTrigger');
@@ -95,8 +97,21 @@ function showAppNotification(message, type = 'is-info') {
 function openModal(el) { if (el) { el.classList.add('is-active'); document.documentElement.classList.add('is-clipped'); } }
 function closeModal(el) { if (el) el.classList.remove('is-active'); if (!document.querySelector('.modal.is-active')) document.documentElement.classList.remove('is-clipped'); }
 
+function normalizeImportedSprintData(rawSprint) {
+  const normalizedSprint = { ...(rawSprint || {}) };
+  normalizedSprint.team = String(normalizedSprint.team || '').trim();
+  normalizedSprint.semester = normalizedSprint.semester || inferSemesterFromDate(normalizedSprint.startDate);
+  normalizedSprint.tasks = Array.isArray(normalizedSprint.tasks) ? normalizedSprint.tasks : [];
+  return normalizedSprint;
+}
+
 function loadSprints() {
-  try { sprints = JSON.parse(localStorage.getItem('sprints_data_v1') || '[]'); } catch { sprints = []; }
+  try {
+    const data = JSON.parse(localStorage.getItem('sprints_data_v1') || '[]');
+    sprints = Array.isArray(data) ? data.map(normalizeImportedSprintData) : [];
+  } catch {
+    sprints = [];
+  }
 }
 function saveSprints() { localStorage.setItem('sprints_data_v1', JSON.stringify(sprints)); }
 
@@ -125,10 +140,32 @@ function getSprintSemester(sprint) {
   return sprint.semester || inferSemesterFromDate(sprint.startDate);
 }
 
+function getAvailableTeams() {
+  return [...new Set(sprints.map((sprint) => String(sprint.team || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+function populateTeamFilterOptions() {
+  if (!teamFilterSelect) return;
+  const selectedTeam = teamFilterSelect.value || 'all';
+  const teamOptions = getAvailableTeams();
+  teamFilterSelect.innerHTML = `<option value="all">Todos os times</option>${teamOptions.map((team) => `<option value="${team}">${team}</option>`).join('')}`;
+  teamFilterSelect.value = teamOptions.includes(selectedTeam) ? selectedTeam : 'all';
+}
+
+function updateSemesterFilterState() {
+  if (!semesterFilterSelect) return;
+  semesterFilterSelect.disabled = false;
+}
+
 function getFilteredSprints() {
+  const selectedTeam = teamFilterSelect?.value || 'all';
   const selectedSemester = semesterFilterSelect?.value || 'all';
-  if (selectedSemester === 'all') return sprints;
-  return sprints.filter((sprint) => getSprintSemester(sprint) === selectedSemester);
+
+  return sprints.filter((sprint) => {
+    const matchesTeam = selectedTeam === 'all' || String(sprint.team || '').trim() === selectedTeam;
+    const matchesSemester = selectedSemester === 'all' || getSprintSemester(sprint) === selectedSemester;
+    return matchesTeam && matchesSemester;
+  });
 }
 
 function calculateSprintStats(sprint) {
@@ -218,6 +255,7 @@ function openNewSprintModal() {
   sprintModalTitleEl.textContent = 'Nova Sprint';
   sprintForm.reset();
   sprintIdInput.value = '';
+  if (sprintTeamInput) sprintTeamInput.value = '';
   if (sprintSemesterInput) sprintSemesterInput.value = '';
   tasksForCurrentSprintForm = [];
   renderTasksInSprintForm();
@@ -227,6 +265,8 @@ function openNewSprintModal() {
 
 function renderSprints() {
   sprintGrid.innerHTML = '';
+  populateTeamFilterOptions();
+  updateSemesterFilterState();
   const filteredSprints = getFilteredSprints();
 
   if (filteredSprints.length === 0) {
@@ -234,9 +274,10 @@ function renderSprints() {
       if (noSprintsTitle) noSprintsTitle.textContent = 'Nenhuma sprint cadastrada';
       if (noSprintsSubtitle) noSprintsSubtitle.textContent = 'Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".';
     } else {
-      const selectedSemester = semesterFilterSelect?.value;
+      const selectedTeam = teamFilterSelect?.value || 'all';
+      const selectedSemester = semesterFilterSelect?.value || 'all';
       if (noSprintsTitle) noSprintsTitle.textContent = 'Nenhuma sprint encontrada para o filtro selecionado';
-      if (noSprintsSubtitle) noSprintsSubtitle.textContent = selectedSemester === 'all' ? 'Ajuste os filtros para visualizar suas sprints.' : `Não há sprints cadastradas para ${selectedSemester}.`;
+      if (noSprintsSubtitle) noSprintsSubtitle.textContent = `Não há sprints para ${selectedTeam === 'all' ? 'os times selecionados' : selectedTeam}${selectedSemester === 'all' ? '' : ` no ${selectedSemester}`}.`;
     }
     noSprintsMessage.classList.remove('is-hidden');
     sprintGrid.classList.add('is-hidden');
@@ -270,6 +311,7 @@ function renderSprints() {
         <div class="card-content"><div class="content is-small has-text-grey">
           <p><strong>Início:</strong> ${sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
           <p><strong>Fim:</strong> ${sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
+          <p><strong>Time:</strong> ${sprint.team || 'N/A'}</p>
           <p><strong>Planejado:</strong> ${sprint.manualPlannedPoints || 0} pts</p>
           <p><strong>Colaboradores:</strong> ${sprint.totalCollaborators || 'N/A'}</p>
           <p><strong>Dias Úteis:</strong> ${sprint.workingDays || 'N/A'}</p>
@@ -306,6 +348,7 @@ function handleEditSprintRequest(e) {
   sprintModalTitleEl.textContent = 'Editar Sprint';
   sprintIdInput.value = sprint.id;
   sprintNameInput.value = sprint.name || '';
+  if (sprintTeamInput) sprintTeamInput.value = sprint.team || '';
   if (sprintSemesterInput) sprintSemesterInput.value = sprint.semester || inferSemesterFromDate(sprint.startDate);
   sprintStartDateInput.value = sprint.startDate || '';
   sprintEndDateInput.value = sprint.endDate || '';
@@ -585,7 +628,7 @@ function handleImportData(event) {
       const importedData = JSON.parse(e.target.result);
       if (!Array.isArray(importedData)) throw new Error('JSON inválido');
       if (confirm('Tem certeza que deseja substituir todos os dados atuais?')) {
-        sprints = importedData.map(s => ({ ...s, tasks: Array.isArray(s.tasks) ? s.tasks : [] }));
+        sprints = importedData.map(normalizeImportedSprintData);
         saveSprints();
         renderSprints();
         showAppNotification('Dados importados com sucesso!', 'is-success');
@@ -686,6 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
   importTasksFileEl?.addEventListener('change', handleImportTasksFromFile);
   sprintStartDateInput?.addEventListener('change', updateWorkingDaysField);
   sprintEndDateInput?.addEventListener('change', updateWorkingDaysField);
+  teamFilterSelect?.addEventListener('change', renderSprints);
   semesterFilterSelect?.addEventListener('change', renderSprints);
   printSprintReportBtn?.addEventListener('click', () => printReport('sprintReportContent'));
   printConsolidatedReportBtn?.addEventListener('click', () => printReport('consolidatedReportViewContent'));
@@ -711,6 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sprintData = {
       id: sprintIdInput.value || crypto.randomUUID(),
       name: sprintNameInput.value.trim(),
+      team: sprintTeamInput?.value.trim() || '',
       semester: sprintSemesterInput?.value || '',
       startDate: sprintStartDateInput.value,
       endDate: sprintEndDateInput.value,
@@ -720,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sprintObservation: sprintObservationInput.value.trim(),
       tasks: [...tasksForCurrentSprintForm]
     };
-    if (!sprintData.name || !sprintData.semester || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome, semestre e datas da sprint.', 'is-danger');
+    if (!sprintData.name || !sprintData.team || !sprintData.semester || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome, time, semestre e datas da sprint.', 'is-danger');
     if (new Date(sprintData.startDate) > new Date(sprintData.endDate)) return showAppNotification('A data inicial não pode ser posterior à final.', 'is-danger');
 
     if (currentEditingSprintId) {

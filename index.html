@@ -67,15 +67,31 @@
 
     <section class="section">
         <div class="container">
-            <div class="field mb-4" style="max-width: 280px;">
-                <label class="label" for="semesterFilter">Filtrar por semestre</label>
-                <div class="control">
-                    <div class="select is-fullwidth">
-                        <select id="semesterFilter">
-                            <option value="all">Todos os semestres</option>
-                            <option value="1° Semestre">1° Semestre</option>
-                            <option value="2° Semestre">2° Semestre</option>
-                        </select>
+            <div class="columns mb-2">
+                <div class="column is-4">
+                    <div class="field mb-4">
+                        <label class="label" for="teamFilter">Filtrar por time</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="teamFilter">
+                                    <option value="all">Todos os times</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-4">
+                    <div class="field mb-4">
+                        <label class="label" for="semesterFilter">Filtrar por semestre do time</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="semesterFilter">
+                                    <option value="all">Todos os semestres</option>
+                                    <option value="1° Semestre">1° Semestre</option>
+                                    <option value="2° Semestre">2° Semestre</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -101,7 +117,7 @@
                 <section class="modal-card-body">
                     <input type="hidden" id="sprintId">
                     <div class="columns">
-                        <div class="column is-two-thirds">
+                        <div class="column is-half">
                             <div class="field">
                                 <label for="sprintName" class="label">Nome da Sprint</label>
                                 <div class="control">
@@ -109,7 +125,15 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="column is-one-third">
+                        <div class="column is-one-quarter">
+                            <div class="field">
+                                <label for="sprintTeam" class="label">Time</label>
+                                <div class="control">
+                                    <input type="text" id="sprintTeam" required class="input" placeholder="Ex: Time A">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-one-quarter">
                             <div class="field">
                                 <label for="sprintSemester" class="label">Semestre</label>
                                 <div class="control">

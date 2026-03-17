@@ -66,7 +66,7 @@ function loadApp() {
     }
   };
 
-  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, getSprintSemester, getFilteredSprints, calculateSprintStats, setSprints: (value) => { sprints = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
+  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
 
   return sandbox.module.exports;
 }
@@ -77,22 +77,38 @@ test('inferSemesterFromDate identifica corretamente o semestre', () => {
   assert.equal(app.inferSemesterFromDate('2026-10-10'), '2° Semestre');
 });
 
-test('getFilteredSprints respeita filtro all e semestre específico', () => {
+test('normalizeImportedSprintData garante campos team/semester/tasks', () => {
+  const app = loadApp();
+  const normalized = app.normalizeImportedSprintData({
+    name: 'Sprint sem time',
+    startDate: '2026-03-01'
+  });
+
+  assert.equal(normalized.team, '');
+  assert.equal(normalized.semester, '1° Semestre');
+  assert.equal(Array.isArray(normalized.tasks), true);
+  assert.equal(normalized.tasks.length, 0);
+});
+
+test('getFilteredSprints filtra por time e semestre simultaneamente', () => {
   const app = loadApp();
   app.setSprints([
-    { id: 's1', semester: '1° Semestre', startDate: '2026-01-01' },
-    { id: 's2', semester: '2° Semestre', startDate: '2026-08-01' },
-    { id: 's3', startDate: '2026-03-01' }
+    { id: 's1', team: 'Time A', semester: '1° Semestre', startDate: '2026-01-01' },
+    { id: 's2', team: 'Time A', semester: '2° Semestre', startDate: '2026-08-01' },
+    { id: 's3', team: 'Time B', semester: '1° Semestre', startDate: '2026-03-01' }
   ]);
 
-  app.setSemesterFilter('all');
-  assert.equal(app.getFilteredSprints().length, 3);
+  app.setTeamFilter('Time A');
+  app.setSemesterFilter('1° Semestre');
+  assert.deepEqual(app.getFilteredSprints().map((s) => s.id), ['s1']);
 
+  app.setTeamFilter('Time A');
+  app.setSemesterFilter('all');
+  assert.deepEqual(app.getFilteredSprints().map((s) => s.id), ['s1', 's2']);
+
+  app.setTeamFilter('all');
   app.setSemesterFilter('1° Semestre');
   assert.deepEqual(app.getFilteredSprints().map((s) => s.id), ['s1', 's3']);
-
-  app.setSemesterFilter('2° Semestre');
-  assert.deepEqual(app.getFilteredSprints().map((s) => s.id), ['s2']);
 });
 
 test('calculateSprintStats mantém sprint como ongoing antes da data final', () => {
