@@ -67,12 +67,40 @@
 
     <section class="section">
         <div class="container">
+            <div class="columns mb-2">
+                <div class="column is-4">
+                    <div class="field mb-4">
+                        <label class="label" for="teamFilter">Filtrar por time</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="teamFilter">
+                                    <option value="all">Todos os times</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-4">
+                    <div class="field mb-4">
+                        <label class="label" for="semesterFilter">Filtrar por semestre do time</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="semesterFilter">
+                                    <option value="all">Todos os semestres</option>
+                                    <option value="1° Semestre">1° Semestre</option>
+                                    <option value="2° Semestre">2° Semestre</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <main id="sprintGrid" class="columns is-multiline is-variable is-4"></main>
             <div id="noSprintsMessage" class="is-hidden has-text-centered py-6 card mt-4">
                 <div class="card-content">
                     <p class="icon is-large has-text-grey-light"><i class="bi bi-folder-x" style="font-size: 3rem;"></i></p>
-                    <p class="title is-5 has-text-grey">Nenhuma sprint cadastrada</p>
-                    <p class="subtitle is-6 has-text-grey-light">Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".</p>
+                    <p id="noSprintsTitle" class="title is-5 has-text-grey">Nenhuma sprint cadastrada</p>
+                    <p id="noSprintsSubtitle" class="subtitle is-6 has-text-grey-light">Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".</p>
                 </div>
             </div>
         </div>
@@ -89,7 +117,7 @@
                 <section class="modal-card-body">
                     <input type="hidden" id="sprintId">
                     <div class="columns">
-                        <div class="column is-two-thirds">
+                        <div class="column is-half">
                             <div class="field">
                                 <label for="sprintName" class="label">Nome da Sprint</label>
                                 <div class="control">
@@ -97,7 +125,15 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="column is-one-third">
+                        <div class="column is-one-quarter">
+                            <div class="field">
+                                <label for="sprintTeam" class="label">Time</label>
+                                <div class="control">
+                                    <input type="text" id="sprintTeam" required class="input" placeholder="Ex: Time A">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-one-quarter">
                             <div class="field">
                                 <label for="sprintSemester" class="label">Semestre</label>
                                 <div class="control">
