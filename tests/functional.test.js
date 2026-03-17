@@ -66,6 +66,7 @@ function loadApp() {
     }
   };
 
+  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, calculateSprintProductivityAverage, buildDashboardDatasets, duplicateSprintData, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
   vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, duplicateSprintData, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
 
   return sandbox.module.exports;
@@ -176,4 +177,37 @@ test('duplicateSprintData cria cópia com novos ids e mantém dados principais',
   assert.notEqual(duplicate.tasks[0].id, source.tasks[0].id);
   assert.notEqual(duplicate.tasks[1].id, source.tasks[1].id);
   assert.equal(duplicate.tasks[0].name, source.tasks[0].name);
+});
+
+
+test('calculateSprintProductivityAverage considera somente tarefas pontuadas', () => {
+  const app = loadApp();
+  const productivity = app.calculateSprintProductivityAverage({
+    tasks: [
+      { points: 8 },
+      { points: 0 },
+      { points: 4 },
+      { points: null }
+    ]
+  });
+
+  assert.equal(productivity, 6);
+});
+
+test('buildDashboardDatasets separa linhas por time e respeita ordem cronológica', () => {
+  const app = loadApp();
+  const { labels, datasets } = app.buildDashboardDatasets([
+    { name: 'Sprint B', team: 'Time A', startDate: '2026-02-01', tasks: [{ points: 6 }] },
+    { name: 'Sprint A', team: 'Time B', startDate: '2026-01-01', tasks: [{ points: 10 }, { points: 0 }] }
+  ]);
+
+  assert.equal(labels.length, 2);
+  assert.equal(labels.join(','), 'Sprint A,Sprint B');
+  assert.equal(datasets.length, 2);
+  const timeA = datasets.find((d) => d.label === 'Time A');
+  const timeB = datasets.find((d) => d.label === 'Time B');
+  assert.equal(timeA.data[0], null);
+  assert.equal(timeA.data[1], 6);
+  assert.equal(timeB.data[0], 10);
+  assert.equal(timeB.data[1], null);
 });

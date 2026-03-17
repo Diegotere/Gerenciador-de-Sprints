@@ -12,8 +12,15 @@ let sprintsEvolutionChartConsolidated = null;
 let productivityEvolutionChart = null;
 let sprintVelocityChart = null;
 let deliveredPointsEvolutionChart = null;
+let sprintsDashboardChart = null;
 
 const sprintGrid = document.getElementById('sprintGrid');
+const sprintProductivityDashboardCanvas = document.getElementById('sprintProductivityDashboardChart');
+const sprintsDashboardEmptyMessage = document.getElementById('sprintsDashboardEmptyMessage');
+const dashboardCalcInfoBtn = document.getElementById('dashboardCalcInfoBtn');
+const dashboardCalcInfoModalEl = document.getElementById('dashboardCalcInfoModal');
+const closeDashboardCalcInfoModalBtn = document.getElementById('closeDashboardCalcInfoModalBtn');
+const closeDashboardCalcInfoModalXBtn = document.getElementById('closeDashboardCalcInfoModalXBtn');
 const addSprintBtn = document.getElementById('addSprintBtn');
 const sprintModalEl = document.getElementById('sprintModal');
 const sprintModalTitleEl = document.getElementById('sprintModalTitleLabel');
@@ -168,6 +175,71 @@ function getFilteredSprints() {
   });
 }
 
+function calculateSprintProductivityAverage(sprint) {
+  const tasks = Array.isArray(sprint?.tasks) ? sprint.tasks : [];
+  const scoredTasks = tasks.filter((task) => Number(task?.points) > 0);
+  if (!scoredTasks.length) return 0;
+  const totalPoints = scoredTasks.reduce((sum, task) => sum + (Number(task.points) || 0), 0);
+  return Number((totalPoints / scoredTasks.length).toFixed(2));
+}
+
+function buildDashboardDatasets(filteredSprints) {
+  const sortedSprints = [...filteredSprints].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  const labels = sortedSprints.map((sprint) => sprint.name || 'Sprint');
+  const teams = [...new Set(sortedSprints.map((sprint) => String(sprint.team || 'Sem Time').trim() || 'Sem Time'))];
+  const palette = ['#3273dc', '#23d160', '#ff3860', '#b86bff', '#ffdd57', '#3298dc', '#ff9f43'];
+
+  const datasets = teams.map((team, idx) => ({
+    label: team,
+    data: sortedSprints.map((sprint) => {
+      const sprintTeam = String(sprint.team || 'Sem Time').trim() || 'Sem Time';
+      return sprintTeam === team ? calculateSprintProductivityAverage(sprint) : null;
+    }),
+    borderColor: palette[idx % palette.length],
+    backgroundColor: `${palette[idx % palette.length]}33`,
+    borderWidth: 2,
+    spanGaps: true,
+    tension: 0.25
+  }));
+
+  return { labels, datasets };
+}
+
+function renderSprintsDashboard(filteredSprints) {
+  if (sprintsDashboardChart) { sprintsDashboardChart.destroy(); sprintsDashboardChart = null; }
+  if (!window.Chart || !sprintProductivityDashboardCanvas) return;
+
+  const { labels, datasets } = buildDashboardDatasets(filteredSprints);
+  const hasData = datasets.some((dataset) => dataset.data.some((value) => value !== null));
+
+  if (!hasData) {
+    sprintProductivityDashboardCanvas.style.display = 'none';
+    if (sprintsDashboardEmptyMessage) sprintsDashboardEmptyMessage.classList.remove('is-hidden');
+    return;
+  }
+
+  sprintProductivityDashboardCanvas.style.display = 'block';
+  if (sprintsDashboardEmptyMessage) sprintsDashboardEmptyMessage.classList.add('is-hidden');
+
+  sprintsDashboardChart = new Chart(sprintProductivityDashboardCanvas, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Média de produtividade (pontos por tarefa pontuada)' }
+        },
+        x: {
+          title: { display: true, text: 'Evolução das sprints (ordem cronológica)' }
+        }
+      }
+    }
+  });
+}
+
 function duplicateSprintData(sourceSprint) {
   const sourceTasks = Array.isArray(sourceSprint?.tasks) ? sourceSprint.tasks : [];
   return {
@@ -291,11 +363,13 @@ function renderSprints() {
     }
     noSprintsMessage.classList.remove('is-hidden');
     sprintGrid.classList.add('is-hidden');
+    renderSprintsDashboard(filteredSprints);
     return;
   }
 
   noSprintsMessage.classList.add('is-hidden');
   sprintGrid.classList.remove('is-hidden');
+  renderSprintsDashboard(filteredSprints);
 
   [...filteredSprints].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
     const stats = calculateSprintStats(sprint);
@@ -732,6 +806,9 @@ document.addEventListener('DOMContentLoaded', () => {
   cancelSprintModalBtn?.addEventListener('click', () => closeModal(sprintModalEl));
   closeSprintModalXBtn?.addEventListener('click', () => closeModal(sprintModalEl));
   closeSprintReportModalXBtn?.addEventListener('click', () => closeModal(sprintReportModalEl));
+  dashboardCalcInfoBtn?.addEventListener('click', () => openModal(dashboardCalcInfoModalEl));
+  closeDashboardCalcInfoModalBtn?.addEventListener('click', () => closeModal(dashboardCalcInfoModalEl));
+  closeDashboardCalcInfoModalXBtn?.addEventListener('click', () => closeModal(dashboardCalcInfoModalEl));
   closeConsolidatedReportViewModalXBtn?.addEventListener('click', () => {
     if (consolidatedTaskTypeChart) { consolidatedTaskTypeChart.destroy(); consolidatedTaskTypeChart = null; }
     if (consolidatedPointsTypeChart) { consolidatedPointsTypeChart.destroy(); consolidatedPointsTypeChart = null; }
