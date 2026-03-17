@@ -146,6 +146,30 @@ body {
     box-shadow: 0 0.75em 1.5em -0.125em rgba(10,10,10,.15), 0 0 0 1px rgba(10,10,10,.03);
 }
 .sprint-card-clickable { cursor: pointer; }
+
+.import-tasks-trigger-btn {
+    min-height: 58px;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    border: 1px solid #d6e8f5;
+    background: linear-gradient(180deg, #f7fcff 0%, #eef7fd 100%);
+    color: var(--custom-primary-dark);
+    text-align: left;
+    transition: all .2s ease;
+}
+.import-tasks-trigger-btn:hover,
+.import-tasks-trigger-btn:focus {
+    border-color: #9fcae8;
+    background: linear-gradient(180deg, #eef8ff 0%, #e4f2fb 100%);
+    color: var(--custom-primary);
+}
+.import-tasks-trigger-btn small {
+    color: #5e6f7f;
+    font-size: .72rem;
+}
+.import-tasks-trigger-icon {
+    color: #2d91d2;
+}
 .modal-card-body {
     max-height: calc(90vh - 120px); 
     overflow-y: auto;

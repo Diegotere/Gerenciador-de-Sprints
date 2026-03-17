@@ -11,6 +11,7 @@ let consolidatedPointsTypeChart = null;
 let sprintsEvolutionChartConsolidated = null;
 let productivityEvolutionChart = null;
 let sprintVelocityChart = null;
+let deliveredPointsEvolutionChart = null;
 
 const sprintGrid = document.getElementById('sprintGrid');
 const addSprintBtn = document.getElementById('addSprintBtn');
@@ -19,6 +20,7 @@ const sprintModalTitleEl = document.getElementById('sprintModalTitleLabel');
 const sprintForm = document.getElementById('sprintForm');
 const sprintIdInput = document.getElementById('sprintId');
 const sprintNameInput = document.getElementById('sprintName');
+const sprintTeamInput = document.getElementById('sprintTeam');
 const sprintSemesterInput = document.getElementById('sprintSemester');
 const sprintStartDateInput = document.getElementById('sprintStartDate');
 const sprintEndDateInput = document.getElementById('sprintEndDate');
@@ -55,6 +57,10 @@ const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 const closeDeleteConfirmModalXBtn = document.getElementById('closeDeleteConfirmModalXBtn');
 const noSprintsMessage = document.getElementById('noSprintsMessage');
+const noSprintsTitle = document.getElementById('noSprintsTitle');
+const noSprintsSubtitle = document.getElementById('noSprintsSubtitle');
+const teamFilterSelect = document.getElementById('teamFilter');
+const semesterFilterSelect = document.getElementById('semesterFilter');
 const exportDataJsonBtn = document.getElementById('exportDataJsonBtn');
 const importDataBtnTrigger = document.getElementById('importDataBtnTrigger');
 const importFileEl = document.getElementById('importFile');
@@ -70,6 +76,15 @@ if (window.Chart && window.ChartDataLabels) {
 
 function normalizeString(str) { return (typeof str === 'string' ? str : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
 
+function isTaskNameDuplicateInCurrentSprint(taskName, taskIndexToIgnore = null) {
+  const normalizedTaskNameToValidate = normalizeString(String(taskName || '').trim());
+  if (!normalizedTaskNameToValidate) return false;
+  return tasksForCurrentSprintForm.some((task, index) => {
+    if (taskIndexToIgnore !== null && index === taskIndexToIgnore) return false;
+    return normalizeString(String(task.name || '').trim()) === normalizedTaskNameToValidate;
+  });
+}
+
 function showAppNotification(message, type = 'is-info') {
   if (!appNotificationEl || !notificationBodyEl) return;
   notificationBodyEl.textContent = message;
@@ -82,8 +97,21 @@ function showAppNotification(message, type = 'is-info') {
 function openModal(el) { if (el) { el.classList.add('is-active'); document.documentElement.classList.add('is-clipped'); } }
 function closeModal(el) { if (el) el.classList.remove('is-active'); if (!document.querySelector('.modal.is-active')) document.documentElement.classList.remove('is-clipped'); }
 
+function normalizeImportedSprintData(rawSprint) {
+  const normalizedSprint = { ...(rawSprint || {}) };
+  normalizedSprint.team = String(normalizedSprint.team || '').trim();
+  normalizedSprint.semester = normalizedSprint.semester || inferSemesterFromDate(normalizedSprint.startDate);
+  normalizedSprint.tasks = Array.isArray(normalizedSprint.tasks) ? normalizedSprint.tasks : [];
+  return normalizedSprint;
+}
+
 function loadSprints() {
-  try { sprints = JSON.parse(localStorage.getItem('sprints_data_v1') || '[]'); } catch { sprints = []; }
+  try {
+    const data = JSON.parse(localStorage.getItem('sprints_data_v1') || '[]');
+    sprints = Array.isArray(data) ? data.map(normalizeImportedSprintData) : [];
+  } catch {
+    sprints = [];
+  }
 }
 function saveSprints() { localStorage.setItem('sprints_data_v1', JSON.stringify(sprints)); }
 
@@ -108,6 +136,48 @@ function inferSemesterFromDate(dateStr) {
   return month <= 6 ? '1° Semestre' : '2° Semestre';
 }
 
+function getSprintSemester(sprint) {
+  return sprint.semester || inferSemesterFromDate(sprint.startDate);
+}
+
+function getAvailableTeams() {
+  return [...new Set(sprints.map((sprint) => String(sprint.team || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+function populateTeamFilterOptions() {
+  if (!teamFilterSelect) return;
+  const selectedTeam = teamFilterSelect.value || 'all';
+  const teamOptions = getAvailableTeams();
+  teamFilterSelect.innerHTML = `<option value="all">Todos os times</option>${teamOptions.map((team) => `<option value="${team}">${team}</option>`).join('')}`;
+  teamFilterSelect.value = teamOptions.includes(selectedTeam) ? selectedTeam : 'all';
+}
+
+function updateSemesterFilterState() {
+  if (!semesterFilterSelect) return;
+  semesterFilterSelect.disabled = false;
+}
+
+function getFilteredSprints() {
+  const selectedTeam = teamFilterSelect?.value || 'all';
+  const selectedSemester = semesterFilterSelect?.value || 'all';
+
+  return sprints.filter((sprint) => {
+    const matchesTeam = selectedTeam === 'all' || String(sprint.team || '').trim() === selectedTeam;
+    const matchesSemester = selectedSemester === 'all' || getSprintSemester(sprint) === selectedSemester;
+    return matchesTeam && matchesSemester;
+  });
+}
+
+function duplicateSprintData(sourceSprint) {
+  const sourceTasks = Array.isArray(sourceSprint?.tasks) ? sourceSprint.tasks : [];
+  return {
+    ...JSON.parse(JSON.stringify(sourceSprint || {})),
+    id: crypto.randomUUID(),
+    name: `${sourceSprint?.name || 'Sprint'} (Cópia)`,
+    tasks: sourceTasks.map((task) => ({ ...JSON.parse(JSON.stringify(task)), id: crypto.randomUUID() }))
+  };
+}
+
 function calculateSprintStats(sprint) {
   const tasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
   const ppm = Number(sprint.manualPlannedPoints) || 0;
@@ -115,9 +185,24 @@ function calculateSprintStats(sprint) {
   const removedPoints = tasks.filter(t => t.status === 'Removida').reduce((s, t) => s + (Number(t.points) || 0), 0);
   const notDeliveredPoints = tasks.filter(t => t.status !== 'Removida' && !t.isCompleted).reduce((s, t) => s + (Number(t.points) || 0), 0);
   const tasksInScope = tasks.filter(t => t.status !== 'Removida');
-  const isGoalMet = tasksInScope.length > 0 && tasksInScope.every(t => t.isCompleted);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const endDate = sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`) : null;
+  const hasEnded = !!(endDate && !Number.isNaN(endDate.getTime()) && today > endDate);
+  const isGoalMet = hasEnded && tasksInScope.length > 0 && tasksInScope.every(t => t.isCompleted);
+  const sprintOutcome = !hasEnded ? 'ongoing' : isGoalMet ? 'complete' : 'incomplete';
   const deliveredPoints = (ppm + includedPoints) - (removedPoints + notDeliveredPoints);
-  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
+  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, hasEnded, sprintOutcome, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
+}
+
+function updateTaskCompletedStateByStatus(status) {
+  if (!taskIsCompletedCheckbox) return;
+  if (status === 'Removida' || status === 'Não entregue') {
+    taskIsCompletedCheckbox.checked = false;
+    taskIsCompletedCheckbox.disabled = true;
+    return;
+  }
+  taskIsCompletedCheckbox.disabled = false;
 }
 
 function populateTaskFormElements() {
@@ -126,6 +211,7 @@ function populateTaskFormElements() {
   taskStatusButtonsContainer.querySelectorAll('.button').forEach(btn => btn.addEventListener('click', () => {
     taskStatusButtonsContainer.querySelectorAll('.button').forEach(b => b.classList.remove('is-active'));
     btn.classList.add('is-active');
+    updateTaskCompletedStateByStatus(btn.dataset.status);
   }));
 }
 
@@ -138,6 +224,7 @@ function resetTaskForm() {
   taskPointsInput.value = '0';
   taskObservationInput.value = '';
   taskIsCompletedCheckbox.checked = false;
+  taskIsCompletedCheckbox.disabled = false;
   addOrUpdateTaskBtn.textContent = 'Adicionar Tarefa';
   cancelTaskEditBtn.classList.add('is-hidden');
   taskStatusButtonsContainer.querySelectorAll('.button').forEach((b, i) => b.classList.toggle('is-active', i === 0));
@@ -167,6 +254,7 @@ function renderTasksInSprintForm() {
     taskObservationInput.value = t.observation || '';
     taskIsCompletedCheckbox.checked = !!t.isCompleted;
     taskStatusButtonsContainer.querySelectorAll('.button').forEach(b => b.classList.toggle('is-active', b.dataset.status === t.status));
+    updateTaskCompletedStateByStatus(t.status);
     addOrUpdateTaskBtn.textContent = 'Atualizar Tarefa';
     cancelTaskEditBtn.classList.remove('is-hidden');
   }));
@@ -177,6 +265,7 @@ function openNewSprintModal() {
   sprintModalTitleEl.textContent = 'Nova Sprint';
   sprintForm.reset();
   sprintIdInput.value = '';
+  if (sprintTeamInput) sprintTeamInput.value = '';
   if (sprintSemesterInput) sprintSemesterInput.value = '';
   tasksForCurrentSprintForm = [];
   renderTasksInSprintForm();
@@ -186,15 +275,29 @@ function openNewSprintModal() {
 
 function renderSprints() {
   sprintGrid.innerHTML = '';
-  if (sprints.length === 0) {
+  populateTeamFilterOptions();
+  updateSemesterFilterState();
+  const filteredSprints = getFilteredSprints();
+
+  if (filteredSprints.length === 0) {
+    if (sprints.length === 0) {
+      if (noSprintsTitle) noSprintsTitle.textContent = 'Nenhuma sprint cadastrada';
+      if (noSprintsSubtitle) noSprintsSubtitle.textContent = 'Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".';
+    } else {
+      const selectedTeam = teamFilterSelect?.value || 'all';
+      const selectedSemester = semesterFilterSelect?.value || 'all';
+      if (noSprintsTitle) noSprintsTitle.textContent = 'Nenhuma sprint encontrada para o filtro selecionado';
+      if (noSprintsSubtitle) noSprintsSubtitle.textContent = `Não há sprints para ${selectedTeam === 'all' ? 'os times selecionados' : selectedTeam}${selectedSemester === 'all' ? '' : ` no ${selectedSemester}`}.`;
+    }
     noSprintsMessage.classList.remove('is-hidden');
     sprintGrid.classList.add('is-hidden');
     return;
   }
+
   noSprintsMessage.classList.add('is-hidden');
   sprintGrid.classList.remove('is-hidden');
 
-  [...sprints].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
+  [...filteredSprints].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
     const stats = calculateSprintStats(sprint);
     const displayIdentifier = sprint.name || (sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric'}) : 'Sprint');
 
@@ -211,24 +314,25 @@ function renderSprints() {
                   <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
                 </button>
               </span>
-              <span class="dropdown-menu" role="menu"><span class="dropdown-content"><a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a><a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a></span></span>
+              <span class="dropdown-menu" role="menu"><span class="dropdown-content"><a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a><a href="#" class="dropdown-item duplicate-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-files me-2"></i>Duplicar</a><a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a></span></span>
             </span>
           </p>
         </header>
         <div class="card-content"><div class="content is-small has-text-grey">
           <p><strong>Início:</strong> ${sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
           <p><strong>Fim:</strong> ${sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
+          <p><strong>Time:</strong> ${sprint.team || 'N/A'}</p>
           <p><strong>Planejado:</strong> ${sprint.manualPlannedPoints || 0} pts</p>
           <p><strong>Colaboradores:</strong> ${sprint.totalCollaborators || 'N/A'}</p>
           <p><strong>Dias Úteis:</strong> ${sprint.workingDays || 'N/A'}</p>
           <p><strong>Tarefas:</strong> ${Array.isArray(sprint.tasks) ? sprint.tasks.length : 0}</p>
         </div></div>
-        <footer class="card-footer"><p class="card-footer-item ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'} is-size-7 has-text-weight-semibold">${stats.isGoalMet ? 'Sprint Completa <i class="bi bi-check-circle-fill"></i>' : 'Sprint Incompleta <i class="bi bi-x-circle-fill"></i>'}</p><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
+        <footer class="card-footer"><p class="card-footer-item ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'} is-size-7 has-text-weight-semibold">${stats.sprintOutcome === 'complete' ? 'Sprint Completa <i class="bi bi-check-circle-fill"></i>' : stats.sprintOutcome === 'incomplete' ? 'Sprint Incompleta <i class="bi bi-x-circle-fill"></i>' : 'Sprint em andamento <i class="bi bi-hourglass-split"></i>'}</p><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
       </div>`;
 
     const card = columnDiv.querySelector('.sprint-card-clickable');
     card.addEventListener('click', (event) => {
-      if (event.target.closest('.edit-sprint-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
+      if (event.target.closest('.edit-sprint-btn, .duplicate-sprint-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
       handleEditSprintRequest({ currentTarget: card });
     });
     card.addEventListener('keydown', (event) => {
@@ -242,6 +346,7 @@ function renderSprints() {
   });
 
   document.querySelectorAll('.edit-sprint-btn').forEach(btn => btn.addEventListener('click', handleEditSprintRequest));
+  document.querySelectorAll('.duplicate-sprint-btn').forEach(btn => btn.addEventListener('click', handleDuplicateSprintRequest));
   document.querySelectorAll('.delete-sprint-btn').forEach(btn => btn.addEventListener('click', handleDeleteSprintRequest));
   document.querySelectorAll('.view-report-btn').forEach(btn => btn.addEventListener('click', handleViewReportRequest));
 }
@@ -254,6 +359,7 @@ function handleEditSprintRequest(e) {
   sprintModalTitleEl.textContent = 'Editar Sprint';
   sprintIdInput.value = sprint.id;
   sprintNameInput.value = sprint.name || '';
+  if (sprintTeamInput) sprintTeamInput.value = sprint.team || '';
   if (sprintSemesterInput) sprintSemesterInput.value = sprint.semester || inferSemesterFromDate(sprint.startDate);
   sprintStartDateInput.value = sprint.startDate || '';
   sprintEndDateInput.value = sprint.endDate || '';
@@ -265,6 +371,17 @@ function handleEditSprintRequest(e) {
   renderTasksInSprintForm();
   resetTaskForm();
   openModal(sprintModalEl);
+}
+
+function handleDuplicateSprintRequest(e) {
+  const sprintId = e.currentTarget.dataset.sprintId;
+  const sprint = sprints.find(s => s.id === sprintId);
+  if (!sprint) return;
+  const duplicatedSprint = duplicateSprintData(sprint);
+  sprints.push(duplicatedSprint);
+  saveSprints();
+  renderSprints();
+  showAppNotification('Sprint duplicada com sucesso!', 'is-success');
 }
 
 function handleDeleteSprintRequest(e) { sprintToDeleteId = e.currentTarget.dataset.sprintId; openModal(deleteConfirmModalEl); }
@@ -321,7 +438,7 @@ function handleViewReportRequest(e) {
     : '';
 
   sprintReportContent.innerHTML = `
-    <h3 class="title is-4 mb-5 ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'}">${stats.isGoalMet ? 'Sprint Batida!' : 'Sprint Não Batida'}</h3>
+    <h3 class="title is-4 mb-5 ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'}">${stats.sprintOutcome === 'complete' ? 'Sprint Batida!' : stats.sprintOutcome === 'incomplete' ? 'Sprint Não Batida' : 'Sprint em andamento'}</h3>
     ${sprintObservationHtml}
     <div class="mb-5">
       <h4 class="subtitle is-5 has-text-primary mb-3">Resumo da Sprint</h4>
@@ -332,7 +449,7 @@ function handleViewReportRequest(e) {
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Não Entregues</p><p class="title is-5 has-text-danger mb-0">${stats.notDeliveredPoints || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Entregues</p><p class="title is-5 has-text-success mb-0">${stats.deliveredPoints || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Total de Tarefas</p><p class="title is-5 mb-0">${stats.totalTasks || 0}</p></div></div>
-        <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Entregue o Planejado?</p><p class="title is-5 ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'} mb-0">${stats.isGoalMet ? 'Sim' : 'Não'}</p></div></div>
+        <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Entregue o Planejado?</p><p class="title is-5 ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'} mb-0">${stats.sprintOutcome === 'complete' ? 'Sim' : stats.sprintOutcome === 'incomplete' ? 'Não' : 'Em andamento'}</p></div></div>
       </div>
     </div>
     <div>
@@ -348,6 +465,7 @@ function handleConsolidatedReport() {
   if (sprintsEvolutionChartConsolidated) { sprintsEvolutionChartConsolidated.destroy(); sprintsEvolutionChartConsolidated = null; }
   if (productivityEvolutionChart) { productivityEvolutionChart.destroy(); productivityEvolutionChart = null; }
   if (sprintVelocityChart) { sprintVelocityChart.destroy(); sprintVelocityChart = null; }
+  if (deliveredPointsEvolutionChart) { deliveredPointsEvolutionChart.destroy(); deliveredPointsEvolutionChart = null; }
 
   if (sprints.length === 0) {
     consolidatedReportViewContent.innerHTML = '<p class="has-text-centered has-text-grey is-italic">Nenhuma sprint cadastrada para gerar o resumo.</p>';
@@ -400,6 +518,7 @@ function handleConsolidatedReport() {
         </div>
 
         <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Velocidade (Planejado vs. Entregue)</h4><div style="height: 350px;"><canvas id="sprintVelocityChartCanvas"></canvas></div></div>
+        <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Evolução de Pontos Entregues por Sprint</h4><div style="height: 300px;"><canvas id="deliveredPointsEvolutionChart"></canvas></div></div>
         <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Evolução de Produtividade</h4><div style="height: 300px;"><canvas id="productivityEvolutionChart"></canvas></div></div>
         <div class="columns">
           <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Tarefas por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="taskTypePieChartConsolidated"></canvas></div></div></div>
@@ -436,6 +555,41 @@ function handleConsolidatedReport() {
           type: 'line',
           data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => (calculateSprintStats(s).deliveredPoints / ((parseFloat(s.totalCollaborators) || 1) * (parseInt(s.workingDays, 10) || 1))).toFixed(2)), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
           options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+
+      const deliveredEvolutionCanvas = document.getElementById('deliveredPointsEvolutionChart');
+      if (deliveredEvolutionCanvas) {
+        deliveredPointsEvolutionChart = new Chart(deliveredEvolutionCanvas, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Pontos Entregues',
+              data: delivered,
+              borderColor: '#23d160',
+              backgroundColor: 'rgba(35, 209, 96, 0.15)',
+              pointBackgroundColor: '#23d160',
+              pointBorderColor: '#23d160',
+              pointRadius: 4,
+              pointHoverRadius: 5,
+              fill: true,
+              tension: 0.25
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Pontos Entregues' }
+              },
+              x: {
+                title: { display: true, text: 'Sprints' }
+              }
+            }
+          }
         });
       }
 
@@ -496,7 +650,7 @@ function handleImportData(event) {
       const importedData = JSON.parse(e.target.result);
       if (!Array.isArray(importedData)) throw new Error('JSON inválido');
       if (confirm('Tem certeza que deseja substituir todos os dados atuais?')) {
-        sprints = importedData.map(s => ({ ...s, tasks: Array.isArray(s.tasks) ? s.tasks : [] }));
+        sprints = importedData.map(normalizeImportedSprintData);
         saveSprints();
         renderSprints();
         showAppNotification('Dados importados com sucesso!', 'is-success');
@@ -521,9 +675,16 @@ function handleImportTasksFromFile(event) {
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
       const dataRows = rows.length && normalizeString(String(rows[0][0])).includes('nome da tarefa') ? rows.slice(1) : rows;
       let count = 0;
+      let skippedDuplicates = 0;
       dataRows.forEach(row => {
         const name = String(row[0] || '').trim();
         if (!name) return;
+
+        if (isTaskNameDuplicateInCurrentSprint(name)) {
+          skippedDuplicates++;
+          return;
+        }
+
         tasksForCurrentSprintForm.push({
           id: crypto.randomUUID(),
           name,
@@ -531,12 +692,20 @@ function handleImportTasksFromFile(event) {
           points: Math.max(0, parseInt(row[2], 10) || 0),
           observation: String(row[3] || '').trim().slice(0, 100),
           status: TASK_STATUSES.find(s => normalizeString(s) === normalizeString(String(row[4] || ''))) || TASK_STATUSES[0],
-          isCompleted: ['true','sim','1','yes','ok','concluído','concluido','concluida'].includes(normalizeString(String(row[5] || '')))
+          isCompleted: (() => {
+            const importedCompleted = ['true','sim','1','yes','ok','concluído','concluido','concluida'].includes(normalizeString(String(row[5] || '')));
+            const normalizedStatus = normalizeString(String(row[4] || ''));
+            return (normalizedStatus === normalizeString('Removida') || normalizedStatus === normalizeString('Não entregue')) ? false : importedCompleted;
+          })()
         });
         count++;
       });
       renderTasksInSprintForm();
-      showAppNotification(`${count} tarefa(s) importada(s).`, count ? 'is-success' : 'is-warning');
+      if (skippedDuplicates > 0) {
+        showAppNotification(`${count} tarefa(s) importada(s). ${skippedDuplicates} duplicada(s) ignorada(s).`, count ? 'is-warning' : 'is-danger');
+      } else {
+        showAppNotification(`${count} tarefa(s) importada(s).`, count ? 'is-success' : 'is-warning');
+      }
     } catch (err) {
       showAppNotification(`Erro ao importar planilha: ${err.message}`, 'is-danger');
     } finally {
@@ -569,6 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sprintsEvolutionChartConsolidated) { sprintsEvolutionChartConsolidated.destroy(); sprintsEvolutionChartConsolidated = null; }
     if (productivityEvolutionChart) { productivityEvolutionChart.destroy(); productivityEvolutionChart = null; }
     if (sprintVelocityChart) { sprintVelocityChart.destroy(); sprintVelocityChart = null; }
+    if (deliveredPointsEvolutionChart) { deliveredPointsEvolutionChart.destroy(); deliveredPointsEvolutionChart = null; }
     closeModal(consolidatedReportViewModalEl);
   });
   cancelDeleteBtn?.addEventListener('click', () => closeModal(deleteConfirmModalEl));
@@ -581,13 +751,20 @@ document.addEventListener('DOMContentLoaded', () => {
   importTasksFileEl?.addEventListener('change', handleImportTasksFromFile);
   sprintStartDateInput?.addEventListener('change', updateWorkingDaysField);
   sprintEndDateInput?.addEventListener('change', updateWorkingDaysField);
+  teamFilterSelect?.addEventListener('change', renderSprints);
+  semesterFilterSelect?.addEventListener('change', renderSprints);
   printSprintReportBtn?.addEventListener('click', () => printReport('sprintReportContent'));
   printConsolidatedReportBtn?.addEventListener('click', () => printReport('consolidatedReportViewContent'));
 
   addOrUpdateTaskBtn?.addEventListener('click', () => {
     const status = taskStatusButtonsContainer.querySelector('.is-active')?.dataset.status || TASK_STATUSES[0];
-    const taskData = { id: editingTaskIndexInForm !== null ? tasksForCurrentSprintForm[editingTaskIndexInForm].id : crypto.randomUUID(), name: taskNameInput.value.trim(), type: taskTypeSelect.value, points: parseInt(taskPointsInput.value, 10) || 0, observation: taskObservationInput.value.trim(), status, isCompleted: status === 'Removida' ? false : taskIsCompletedCheckbox.checked };
+    const taskData = { id: editingTaskIndexInForm !== null ? tasksForCurrentSprintForm[editingTaskIndexInForm].id : crypto.randomUUID(), name: taskNameInput.value.trim(), type: taskTypeSelect.value, points: parseInt(taskPointsInput.value, 10) || 0, observation: taskObservationInput.value.trim(), status, isCompleted: (status === 'Removida' || status === 'Não entregue') ? false : taskIsCompletedCheckbox.checked };
     if (!taskData.name) return showAppNotification('O nome da tarefa é obrigatório.', 'is-warning');
+
+    if (isTaskNameDuplicateInCurrentSprint(taskData.name, editingTaskIndexInForm)) {
+      return showAppNotification(`A tarefa "${taskData.name}" já existe nesta sprint.`, 'is-danger');
+    }
+
     if (editingTaskIndexInForm !== null) tasksForCurrentSprintForm[editingTaskIndexInForm] = taskData; else tasksForCurrentSprintForm.push(taskData);
     renderTasksInSprintForm();
     resetTaskForm();
@@ -600,6 +777,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sprintData = {
       id: sprintIdInput.value || crypto.randomUUID(),
       name: sprintNameInput.value.trim(),
+      team: sprintTeamInput?.value.trim() || '',
       semester: sprintSemesterInput?.value || '',
       startDate: sprintStartDateInput.value,
       endDate: sprintEndDateInput.value,
@@ -609,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sprintObservation: sprintObservationInput.value.trim(),
       tasks: [...tasksForCurrentSprintForm]
     };
-    if (!sprintData.name || !sprintData.semester || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome, semestre e datas da sprint.', 'is-danger');
+    if (!sprintData.name || !sprintData.team || !sprintData.semester || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome, time, semestre e datas da sprint.', 'is-danger');
     if (new Date(sprintData.startDate) > new Date(sprintData.endDate)) return showAppNotification('A data inicial não pode ser posterior à final.', 'is-danger');
 
     if (currentEditingSprintId) {
