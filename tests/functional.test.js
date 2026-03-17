@@ -67,6 +67,7 @@ function loadApp() {
   };
 
   vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, calculateSprintProductivityAverage, buildDashboardDatasets, duplicateSprintData, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
+  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, duplicateSprintData, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
 
   return sandbox.module.exports;
 }
