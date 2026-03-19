@@ -423,7 +423,7 @@ function renderSprints() {
       const displayIdentifier = sprint.name || (sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric'}) : 'Sprint');
 
       const columnDiv = document.createElement('div');
-      columnDiv.className = 'column is-one-third-desktop is-half-tablet';
+      columnDiv.className = 'column is-half-mobile is-one-third-tablet is-one-quarter-desktop';
       columnDiv.innerHTML = `
         <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="Editar sprint ${displayIdentifier}">
           <header class="card-header" style="background-color: ${visualStatus.headerColor}; box-shadow: none;">
