@@ -281,6 +281,18 @@ function calculateSprintStats(sprint) {
   return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, hasEnded, sprintOutcome, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
 }
 
+function getSprintVisualStatus(sprint, stats) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startDate = sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`) : null;
+  const notStarted = !!(startDate && !Number.isNaN(startDate.getTime()) && today < startDate);
+
+  if (notStarted) return { key: 'not_started', label: 'Sprint não iniciada', textClass: 'has-text-link', headerColor: '#3273dc' };
+  if (stats.sprintOutcome === 'complete') return { key: 'complete', label: 'Sprint Completa', textClass: 'has-text-success', headerColor: '#23d160' };
+  if (stats.sprintOutcome === 'incomplete') return { key: 'incomplete', label: 'Sprint Incompleta', textClass: 'has-text-danger', headerColor: '#ff3860' };
+  return { key: 'ongoing', label: 'Sprint em andamento', textClass: 'has-text-warning', headerColor: '#ff9800' };
+}
+
 function updateTaskCompletedStateByStatus(status) {
   if (!taskIsCompletedCheckbox) return;
   if (status === 'Removida' || status === 'Não entregue') {
@@ -385,59 +397,79 @@ function renderSprints() {
   sprintGrid.classList.remove('is-hidden');
   renderSprintsDashboard(filteredSprints);
 
-  [...filteredSprints].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
-    const stats = calculateSprintStats(sprint);
-    const displayIdentifier = sprint.name || (sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric'}) : 'Sprint');
+  const groupedByTeam = filteredSprints.reduce((acc, sprint) => {
+    const team = String(sprint.team || 'Sem Time').trim() || 'Sem Time';
+    if (!acc[team]) acc[team] = [];
+    acc[team].push(sprint);
+    return acc;
+  }, {});
 
-    const columnDiv = document.createElement('div');
-    columnDiv.className = 'column is-one-third-desktop is-half-tablet';
-    columnDiv.innerHTML = `
-      <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="Editar sprint ${displayIdentifier}">
-        <header class="card-header" style="background-color: #00609C; box-shadow: none;">
-          <p class="card-header-title has-text-white is-justify-content-space-between">
-            <span class="is-truncated" title="${displayIdentifier}">${displayIdentifier}</span>
-            <span class="dropdown is-hoverable is-right">
-              <span class="dropdown-trigger">
-                <button class="button is-small is-primary is-inverted is-outlined" aria-haspopup="true" aria-controls="dropdown-sprint-card" style="border:none;background-color:transparent !important;">
-                  <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
-                </button>
-              </span>
-              <span class="dropdown-menu" role="menu">
-                <span class="dropdown-content">
-                  <a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a>
-                  <a href="#" class="dropdown-item duplicate-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-files me-2"></i>Duplicar</a>
-                  <a href="#" class="dropdown-item export-sprint-excel-btn" data-sprint-id="${sprint.id}"><i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel</a>
-                  <a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a>
+  const teamNames = Object.keys(groupedByTeam).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  teamNames.forEach((teamName) => {
+    const teamWrapper = document.createElement('section');
+    teamWrapper.className = 'box mb-5';
+    teamWrapper.style.border = '1px solid #d5e7f5';
+    teamWrapper.innerHTML = `<h3 class="title is-5 mb-4 has-text-link">${teamName}</h3><div class="columns is-multiline is-variable is-4" data-team-grid="${teamName}"></div>`;
+    const teamGrid = teamWrapper.querySelector('[data-team-grid]');
+
+    [...groupedByTeam[teamName]].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
+      const stats = calculateSprintStats(sprint);
+      const visualStatus = getSprintVisualStatus(sprint, stats);
+      const displayIdentifier = sprint.name || (sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric'}) : 'Sprint');
+
+      const columnDiv = document.createElement('div');
+      columnDiv.className = 'column is-one-third-desktop is-half-tablet';
+      columnDiv.innerHTML = `
+        <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="Editar sprint ${displayIdentifier}">
+          <header class="card-header" style="background-color: ${visualStatus.headerColor}; box-shadow: none;">
+            <p class="card-header-title has-text-white is-justify-content-space-between">
+              <span class="is-truncated" title="${displayIdentifier}">${displayIdentifier}</span>
+              <span class="dropdown is-hoverable is-right">
+                <span class="dropdown-trigger">
+                  <button class="button is-small is-primary is-inverted is-outlined" aria-haspopup="true" aria-controls="dropdown-sprint-card" style="border:none;background-color:transparent !important;">
+                    <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
+                  </button>
+                </span>
+                <span class="dropdown-menu" role="menu">
+                  <span class="dropdown-content">
+                    <a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a>
+                    <a href="#" class="dropdown-item duplicate-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-files me-2"></i>Duplicar</a>
+                    <a href="#" class="dropdown-item export-sprint-excel-btn" data-sprint-id="${sprint.id}"><i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel</a>
+                    <a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a>
+                  </span>
                 </span>
               </span>
-            </span>
-          </p>
-        </header>
-        <div class="card-content"><div class="content is-small has-text-grey">
-          <p><strong>Início:</strong> ${sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
-          <p><strong>Fim:</strong> ${sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
-          <p><strong>Time:</strong> ${sprint.team || 'N/A'}</p>
-          <p><strong>Planejado:</strong> ${sprint.manualPlannedPoints || 0} pts</p>
-          <p><strong>Colaboradores:</strong> ${sprint.totalCollaborators || 'N/A'}</p>
-          <p><strong>Dias Úteis:</strong> ${sprint.workingDays || 'N/A'}</p>
-          <p><strong>Tarefas:</strong> ${Array.isArray(sprint.tasks) ? sprint.tasks.length : 0}</p>
-        </div></div>
-        <footer class="card-footer"><p class="card-footer-item ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'} is-size-7 has-text-weight-semibold">${stats.sprintOutcome === 'complete' ? 'Sprint Completa <i class="bi bi-check-circle-fill"></i>' : stats.sprintOutcome === 'incomplete' ? 'Sprint Incompleta <i class="bi bi-x-circle-fill"></i>' : 'Sprint em andamento <i class="bi bi-hourglass-split"></i>'}</p><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
-      </div>`;
+            </p>
+          </header>
+          <div class="card-content"><div class="content is-small has-text-grey">
+            <p><strong>Status:</strong> <span class="${visualStatus.textClass}">${visualStatus.label}</span></p>
+            <p><strong>Início:</strong> ${sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
+            <p><strong>Fim:</strong> ${sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
+            <p><strong>Planejado:</strong> ${sprint.manualPlannedPoints || 0} pts</p>
+            <p><strong>Colaboradores:</strong> ${sprint.totalCollaborators || 'N/A'}</p>
+            <p><strong>Dias Úteis:</strong> ${sprint.workingDays || 'N/A'}</p>
+            <p><strong>Tarefas:</strong> ${Array.isArray(sprint.tasks) ? sprint.tasks.length : 0}</p>
+          </div></div>
+          <footer class="card-footer"><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
+        </div>`;
 
-    const card = columnDiv.querySelector('.sprint-card-clickable');
-    card.addEventListener('click', (event) => {
-      if (event.target.closest('.edit-sprint-btn, .duplicate-sprint-btn, .export-sprint-excel-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
-      handleEditSprintRequest({ currentTarget: card });
-    });
-    card.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
+      const card = columnDiv.querySelector('.sprint-card-clickable');
+      card.addEventListener('click', (event) => {
+        if (event.target.closest('.edit-sprint-btn, .duplicate-sprint-btn, .export-sprint-excel-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
         handleEditSprintRequest({ currentTarget: card });
-      }
+      });
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleEditSprintRequest({ currentTarget: card });
+        }
+      });
+
+      teamGrid.appendChild(columnDiv);
     });
 
-    sprintGrid.appendChild(columnDiv);
+    sprintGrid.appendChild(teamWrapper);
   });
 
   document.querySelectorAll('.edit-sprint-btn').forEach(btn => btn.addEventListener('click', handleEditSprintRequest));

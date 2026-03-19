@@ -66,7 +66,7 @@ function loadApp() {
     }
   };
 
-  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, calculateSprintProductivityAverage, buildDashboardDatasets, getSprintTasksExportRows, duplicateSprintData, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
+  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, calculateSprintProductivityAverage, buildDashboardDatasets, getSprintTasksExportRows, duplicateSprintData, getSprintVisualStatus, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
 
   return sandbox.module.exports;
 }
@@ -226,4 +226,35 @@ test('getSprintTasksExportRows gera layout compatível com importação', () => 
   assert.equal(rows[1][0], 'Task 1');
   assert.equal(rows[1][5], 'Sim');
   assert.equal(rows[2][5], 'Não');
+});
+
+
+test('getSprintVisualStatus retorna cor/estado conforme fase da sprint', () => {
+  const app = loadApp();
+
+  const notStarted = app.getSprintVisualStatus(
+    { startDate: '2099-01-01' },
+    { sprintOutcome: 'ongoing' }
+  );
+  const ongoing = app.getSprintVisualStatus(
+    { startDate: '2020-01-01' },
+    { sprintOutcome: 'ongoing' }
+  );
+  const complete = app.getSprintVisualStatus(
+    { startDate: '2020-01-01' },
+    { sprintOutcome: 'complete' }
+  );
+  const incomplete = app.getSprintVisualStatus(
+    { startDate: '2020-01-01' },
+    { sprintOutcome: 'incomplete' }
+  );
+
+  assert.equal(notStarted.key, 'not_started');
+  assert.equal(notStarted.headerColor, '#3273dc');
+  assert.equal(ongoing.key, 'ongoing');
+  assert.equal(ongoing.headerColor, '#ff9800');
+  assert.equal(complete.key, 'complete');
+  assert.equal(complete.headerColor, '#23d160');
+  assert.equal(incomplete.key, 'incomplete');
+  assert.equal(incomplete.headerColor, '#ff3860');
 });
