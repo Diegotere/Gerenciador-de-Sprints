@@ -66,6 +66,7 @@ function loadApp() {
     }
   };
 
+  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, calculateSprintProductivityAverage, buildDashboardDatasets, getSprintTasksExportRows, duplicateSprintData, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
   vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, calculateSprintProductivityAverage, buildDashboardDatasets, duplicateSprintData, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
   vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, duplicateSprintData, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
 
@@ -210,4 +211,21 @@ test('buildDashboardDatasets separa linhas por time e respeita ordem cronológic
   assert.equal(timeA.data[1], 6);
   assert.equal(timeB.data[0], 10);
   assert.equal(timeB.data[1], null);
+});
+
+
+test('getSprintTasksExportRows gera layout compatível com importação', () => {
+  const app = loadApp();
+  const rows = app.getSprintTasksExportRows({
+    tasks: [
+      { name: 'Task 1', type: 'Novo Recurso', points: 8, observation: 'Obs', status: 'Planejada', isCompleted: true },
+      { name: 'Task 2', type: 'Erro', points: 0, observation: '', status: 'Não entregue', isCompleted: false }
+    ]
+  });
+
+  assert.equal(rows.length, 3);
+  assert.equal(rows[0].join(','), 'Nome da Tarefa,Tipo,Pontos,Observação,Status,Concluída?');
+  assert.equal(rows[1][0], 'Task 1');
+  assert.equal(rows[1][5], 'Sim');
+  assert.equal(rows[2][5], 'Não');
 });

@@ -240,6 +240,20 @@ function renderSprintsDashboard(filteredSprints) {
   });
 }
 
+function getSprintTasksExportRows(sprint) {
+  const header = ['Nome da Tarefa', 'Tipo', 'Pontos', 'Observação', 'Status', 'Concluída?'];
+  const tasks = Array.isArray(sprint?.tasks) ? sprint.tasks : [];
+  const rows = tasks.map((task) => ([
+    task?.name || '',
+    task?.type || '',
+    Number(task?.points) || 0,
+    task?.observation || '',
+    task?.status || '',
+    task?.isCompleted ? 'Sim' : 'Não'
+  ]));
+  return [header, ...rows];
+}
+
 function duplicateSprintData(sourceSprint) {
   const sourceTasks = Array.isArray(sourceSprint?.tasks) ? sourceSprint.tasks : [];
   return {
@@ -388,6 +402,7 @@ function renderSprints() {
                   <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
                 </button>
               </span>
+              <span class="dropdown-menu" role="menu"><span class="dropdown-content"><a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a><a href="#" class="dropdown-item duplicate-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-files me-2"></i>Duplicar</a><a href="#" class="dropdown-item export-sprint-excel-btn" data-sprint-id="${sprint.id}"><i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel</a><a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a></span></span>
               <span class="dropdown-menu" role="menu"><span class="dropdown-content"><a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a><a href="#" class="dropdown-item duplicate-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-files me-2"></i>Duplicar</a><a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a></span></span>
             </span>
           </p>
@@ -406,6 +421,7 @@ function renderSprints() {
 
     const card = columnDiv.querySelector('.sprint-card-clickable');
     card.addEventListener('click', (event) => {
+      if (event.target.closest('.edit-sprint-btn, .duplicate-sprint-btn, .export-sprint-excel-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
       if (event.target.closest('.edit-sprint-btn, .duplicate-sprint-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
       handleEditSprintRequest({ currentTarget: card });
     });
@@ -421,6 +437,7 @@ function renderSprints() {
 
   document.querySelectorAll('.edit-sprint-btn').forEach(btn => btn.addEventListener('click', handleEditSprintRequest));
   document.querySelectorAll('.duplicate-sprint-btn').forEach(btn => btn.addEventListener('click', handleDuplicateSprintRequest));
+  document.querySelectorAll('.export-sprint-excel-btn').forEach(btn => btn.addEventListener('click', handleExportSprintExcelRequest));
   document.querySelectorAll('.delete-sprint-btn').forEach(btn => btn.addEventListener('click', handleDeleteSprintRequest));
   document.querySelectorAll('.view-report-btn').forEach(btn => btn.addEventListener('click', handleViewReportRequest));
 }
@@ -456,6 +473,21 @@ function handleDuplicateSprintRequest(e) {
   saveSprints();
   renderSprints();
   showAppNotification('Sprint duplicada com sucesso!', 'is-success');
+}
+
+function handleExportSprintExcelRequest(e) {
+  const sprintId = e.currentTarget.dataset.sprintId;
+  const sprint = sprints.find(s => s.id === sprintId);
+  if (!sprint) return;
+
+  const rows = getSprintTasksExportRows(sprint);
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Tarefas');
+
+  const sprintLabel = String(sprint.name || 'sprint').replace(/[^a-zA-Z0-9-_]+/g, '_').slice(0, 80) || 'sprint';
+  XLSX.writeFile(workbook, `${sprintLabel}_tarefas.xlsx`);
+  showAppNotification('Sprint exportada para Excel com sucesso!', 'is-success');
 }
 
 function handleDeleteSprintRequest(e) { sprintToDeleteId = e.currentTarget.dataset.sprintId; openModal(deleteConfirmModalEl); }
