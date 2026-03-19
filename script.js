@@ -175,6 +175,10 @@ function getFilteredSprints() {
   });
 }
 
+function getSprintsByTeam(teamName) {
+  return sprints.filter((sprint) => String(sprint.team || '').trim() === teamName);
+}
+
 function calculateSprintProductivityAverage(sprint) {
   const tasks = Array.isArray(sprint?.tasks) ? sprint.tasks : [];
   const scoredTasks = tasks.filter((task) => Number(task?.points) > 0);
@@ -610,148 +614,166 @@ function handleConsolidatedReport() {
   if (sprintVelocityChart) { sprintVelocityChart.destroy(); sprintVelocityChart = null; }
   if (deliveredPointsEvolutionChart) { deliveredPointsEvolutionChart.destroy(); deliveredPointsEvolutionChart = null; }
 
-  if (sprints.length === 0) {
+  const teams = getAvailableTeams();
+  if (!teams.length) {
     consolidatedReportViewContent.innerHTML = '<p class="has-text-centered has-text-grey is-italic">Nenhuma sprint cadastrada para gerar o resumo.</p>';
-  } else {
-    let totalTasksOverall = 0;
-    let totalDeliveredPointsOverall = 0;
-    let totalScopePointsOverall = 0;
-    const taskTypeCounts = {};
-    const taskTypePoints = {};
-    TASK_TYPES.forEach(type => {
-      taskTypeCounts[type] = 0;
-      taskTypePoints[type] = 0;
+    openModal(consolidatedReportViewModalEl);
+    return;
+  }
+
+  const currentTeam = document.getElementById('consolidatedTeamFilter')?.value;
+  const selectedTeam = teams.includes(currentTeam) ? currentTeam : teams[0];
+  const teamSprints = getSprintsByTeam(selectedTeam);
+
+  let totalTasksOverall = 0;
+  let totalDeliveredPointsOverall = 0;
+  let totalScopePointsOverall = 0;
+  const taskTypeCounts = {};
+  const taskTypePoints = {};
+  TASK_TYPES.forEach(type => {
+    taskTypeCounts[type] = 0;
+    taskTypePoints[type] = 0;
+  });
+
+  teamSprints.forEach(sprint => {
+    const stats = calculateSprintStats(sprint);
+    const scopePoints = (stats.ppm || 0) + (stats.includedPoints || 0) - (stats.removedPoints || 0);
+    totalTasksOverall += (Array.isArray(sprint.tasks) ? sprint.tasks.filter(t => t.status !== 'Removida').length : 0);
+    totalDeliveredPointsOverall += stats.deliveredPoints || 0;
+    totalScopePointsOverall += scopePoints;
+
+    (Array.isArray(sprint.tasks) ? sprint.tasks : []).forEach(task => {
+      if (task.status !== 'Removida') {
+        if (taskTypeCounts[task.type] !== undefined) taskTypeCounts[task.type] += 1;
+        if (taskTypePoints[task.type] !== undefined) taskTypePoints[task.type] += (Number(task.points) || 0);
+      }
     });
+  });
 
-    sprints.forEach(sprint => {
-      const stats = calculateSprintStats(sprint);
-      const scopePoints = (stats.ppm || 0) + (stats.includedPoints || 0) - (stats.removedPoints || 0);
-      totalTasksOverall += (Array.isArray(sprint.tasks) ? sprint.tasks.filter(t => t.status !== 'Removida').length : 0);
-      totalDeliveredPointsOverall += stats.deliveredPoints || 0;
-      totalScopePointsOverall += scopePoints;
+  const averageTasksPerSprint = teamSprints.length ? (totalTasksOverall / teamSprints.length).toFixed(1) : '0.0';
+  const averagePointsPerSprint = teamSprints.length ? (totalDeliveredPointsOverall / teamSprints.length).toFixed(1) : '0.0';
+  const averagePointsPerTask = totalTasksOverall ? (totalDeliveredPointsOverall / totalTasksOverall).toFixed(1) : '0.0';
+  const averageCompletionRate = totalScopePointsOverall > 0 ? Math.max(0, (totalDeliveredPointsOverall / totalScopePointsOverall) * 100).toFixed(1) : '0.0';
 
-      (Array.isArray(sprint.tasks) ? sprint.tasks : []).forEach(task => {
-        if (task.status !== 'Removida') {
-          if (taskTypeCounts[task.type] !== undefined) taskTypeCounts[task.type] += 1;
-          if (taskTypePoints[task.type] !== undefined) taskTypePoints[task.type] += (Number(task.points) || 0);
-        }
+  consolidatedReportViewContent.innerHTML = `
+    <div class="field mb-4">
+      <label class="label">Time do resumo</label>
+      <div class="control" style="max-width: 320px;">
+        <div class="select is-fullwidth">
+          <select id="consolidatedTeamFilter">${teams.map((team) => `<option value="${team}" ${team === selectedTeam ? 'selected' : ''}>${team}</option>`).join('')}</select>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 class="title is-5 has-text-primary mb-3">Estatísticas Gerais - ${selectedTeam}</h3>
+      <div class="columns is-multiline is-mobile mb-5">
+        <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-sprints"><p class="stat-card-title">Total de Sprints</p><p class="stat-card-value">${teamSprints.length}</p></div></div>
+        <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-tasks"><p class="stat-card-title">Total de Tarefas (Escopo)</p><p class="stat-card-value">${totalTasksOverall}</p></div></div>
+        <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-delivered-points"><p class="stat-card-title">Total de Pontos Entregues</p><p class="stat-card-value">${totalDeliveredPointsOverall}</p></div></div>
+        <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card avg-completion-rate"><p class="stat-card-title">Taxa Média de Conclusão</p><p class="stat-card-value">${averageCompletionRate}%</p></div></div>
+      </div>
+
+      <h3 class="title is-5 has-text-primary mb-3">Médias por Sprint</h3>
+      <div class="columns is-multiline is-mobile mb-5">
+        <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-tasks"><p class="stat-card-title">Média de Tarefas por Sprint</p><p class="stat-card-value">${averageTasksPerSprint}</p></div></div>
+        <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-points"><p class="stat-card-title">Média de Pontos por Sprint</p><p class="stat-card-value">${averagePointsPerSprint}</p></div></div>
+        <div class="column is-full-mobile is-one-third-tablet"><div class="stat-card avg-points-per-task"><p class="stat-card-title">Média de Pontos por Tarefa</p><p class="stat-card-value">${averagePointsPerTask}</p></div></div>
+      </div>
+
+      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Velocidade (Planejado vs. Entregue)</h4><div style="height: 350px;"><canvas id="sprintVelocityChartCanvas"></canvas></div></div>
+      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Evolução de Pontos Entregues por Sprint</h4><div style="height: 300px;"><canvas id="deliveredPointsEvolutionChart"></canvas></div></div>
+      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Evolução de Produtividade</h4><div style="height: 300px;"><canvas id="productivityEvolutionChart"></canvas></div></div>
+      <div class="columns">
+        <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Tarefas por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="taskTypePieChartConsolidated"></canvas></div></div></div>
+        <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Pontos por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="pointsTypePieChartConsolidated"></canvas></div></div></div>
+      </div>
+    </div>`;
+
+  document.getElementById('consolidatedTeamFilter')?.addEventListener('change', handleConsolidatedReport);
+
+  if (window.Chart) {
+    const sorted = [...teamSprints].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    const labels = sorted.map(s => calculateSprintStats(s).sprintName);
+    const planned = sorted.map(s => calculateSprintStats(s).ppm || 0);
+    const delivered = sorted.map(s => calculateSprintStats(s).deliveredPoints || 0);
+    const avgDelivered = delivered.length ? delivered.reduce((a, b) => a + b, 0) / delivered.length : 0;
+
+    const velocityCanvas = document.getElementById('sprintVelocityChartCanvas');
+    if (velocityCanvas) {
+      sprintVelocityChart = new Chart(velocityCanvas, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Planejado', data: planned, backgroundColor: 'rgba(255, 204, 153, 0.7)', borderColor: 'rgba(255, 204, 153, 1)', borderWidth: 1 },
+            { label: 'Entregue', data: delivered, backgroundColor: 'rgba(163, 217, 163, 0.7)', borderColor: 'rgba(163, 217, 163, 1)', borderWidth: 1 },
+            { label: `Média Entregue (${avgDelivered.toFixed(2)})`, data: labels.map(() => avgDelivered.toFixed(2)), type: 'line', borderColor: 'rgba(77, 175, 77, 1)', fill: false, tension: 0, pointRadius: 0, borderWidth: 2 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
       });
-    });
+    }
 
-    const averageTasksPerSprint = (totalTasksOverall / sprints.length).toFixed(1);
-    const averagePointsPerSprint = (totalDeliveredPointsOverall / sprints.length).toFixed(1);
-    const averagePointsPerTask = totalTasksOverall ? (totalDeliveredPointsOverall / totalTasksOverall).toFixed(1) : '0.0';
-    const averageCompletionRate = totalScopePointsOverall > 0 ? Math.max(0, (totalDeliveredPointsOverall / totalScopePointsOverall) * 100).toFixed(1) : '0.0';
+    const productivityCanvas = document.getElementById('productivityEvolutionChart');
+    if (productivityCanvas) {
+      productivityEvolutionChart = new Chart(productivityCanvas, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => (calculateSprintStats(s).deliveredPoints / ((parseFloat(s.totalCollaborators) || 1) * (parseInt(s.workingDays, 10) || 1))).toFixed(2)), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
 
-    consolidatedReportViewContent.innerHTML = `
-      <div>
-        <h3 class="title is-5 has-text-primary mb-3">Estatísticas Gerais</h3>
-        <div class="columns is-multiline is-mobile mb-5">
-          <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-sprints"><p class="stat-card-title">Total de Sprints</p><p class="stat-card-value">${sprints.length}</p></div></div>
-          <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-tasks"><p class="stat-card-title">Total de Tarefas (Escopo)</p><p class="stat-card-value">${totalTasksOverall}</p></div></div>
-          <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-delivered-points"><p class="stat-card-title">Total de Pontos Entregues</p><p class="stat-card-value">${totalDeliveredPointsOverall}</p></div></div>
-          <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card avg-completion-rate"><p class="stat-card-title">Taxa Média de Conclusão</p><p class="stat-card-value">${averageCompletionRate}%</p></div></div>
-        </div>
-
-        <h3 class="title is-5 has-text-primary mb-3">Médias por Sprint</h3>
-        <div class="columns is-multiline is-mobile mb-5">
-          <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-tasks"><p class="stat-card-title">Média de Tarefas por Sprint</p><p class="stat-card-value">${averageTasksPerSprint}</p></div></div>
-          <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-points"><p class="stat-card-title">Média de Pontos por Sprint</p><p class="stat-card-value">${averagePointsPerSprint}</p></div></div>
-          <div class="column is-full-mobile is-one-third-tablet"><div class="stat-card avg-points-per-task"><p class="stat-card-title">Média de Pontos por Tarefa</p><p class="stat-card-value">${averagePointsPerTask}</p></div></div>
-        </div>
-
-        <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Velocidade (Planejado vs. Entregue)</h4><div style="height: 350px;"><canvas id="sprintVelocityChartCanvas"></canvas></div></div>
-        <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Evolução de Pontos Entregues por Sprint</h4><div style="height: 300px;"><canvas id="deliveredPointsEvolutionChart"></canvas></div></div>
-        <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Evolução de Produtividade</h4><div style="height: 300px;"><canvas id="productivityEvolutionChart"></canvas></div></div>
-        <div class="columns">
-          <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Tarefas por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="taskTypePieChartConsolidated"></canvas></div></div></div>
-          <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Pontos por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="pointsTypePieChartConsolidated"></canvas></div></div></div>
-        </div>
-      </div>`;
-
-    if (window.Chart) {
-      const sorted = [...sprints].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-      const labels = sorted.map(s => calculateSprintStats(s).sprintName);
-      const planned = sorted.map(s => calculateSprintStats(s).ppm || 0);
-      const delivered = sorted.map(s => calculateSprintStats(s).deliveredPoints || 0);
-      const avgDelivered = delivered.length ? delivered.reduce((a, b) => a + b, 0) / delivered.length : 0;
-
-      const velocityCanvas = document.getElementById('sprintVelocityChartCanvas');
-      if (velocityCanvas) {
-        sprintVelocityChart = new Chart(velocityCanvas, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [
-              { label: 'Planejado', data: planned, backgroundColor: 'rgba(255, 204, 153, 0.7)', borderColor: 'rgba(255, 204, 153, 1)', borderWidth: 1 },
-              { label: 'Entregue', data: delivered, backgroundColor: 'rgba(163, 217, 163, 0.7)', borderColor: 'rgba(163, 217, 163, 1)', borderWidth: 1 },
-              { label: `Média Entregue (${avgDelivered.toFixed(2)})`, data: labels.map(() => avgDelivered.toFixed(2)), type: 'line', borderColor: 'rgba(77, 175, 77, 1)', fill: false, tension: 0, pointRadius: 0, borderWidth: 2 }
-            ]
-          },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
-        });
-      }
-
-      const productivityCanvas = document.getElementById('productivityEvolutionChart');
-      if (productivityCanvas) {
-        productivityEvolutionChart = new Chart(productivityCanvas, {
-          type: 'line',
-          data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => (calculateSprintStats(s).deliveredPoints / ((parseFloat(s.totalCollaborators) || 1) * (parseInt(s.workingDays, 10) || 1))).toFixed(2)), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
-      }
-
-      const deliveredEvolutionCanvas = document.getElementById('deliveredPointsEvolutionChart');
-      if (deliveredEvolutionCanvas) {
-        deliveredPointsEvolutionChart = new Chart(deliveredEvolutionCanvas, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Pontos Entregues',
-              data: delivered,
-              borderColor: '#23d160',
-              backgroundColor: 'rgba(35, 209, 96, 0.15)',
-              pointBackgroundColor: '#23d160',
-              pointBorderColor: '#23d160',
-              pointRadius: 4,
-              pointHoverRadius: 5,
-              fill: true,
-              tension: 0.25
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Pontos Entregues' }
-              },
-              x: {
-                title: { display: true, text: 'Sprints' }
-              }
+    const deliveredEvolutionCanvas = document.getElementById('deliveredPointsEvolutionChart');
+    if (deliveredEvolutionCanvas) {
+      deliveredPointsEvolutionChart = new Chart(deliveredEvolutionCanvas, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Pontos Entregues',
+            data: delivered,
+            borderColor: '#23d160',
+            backgroundColor: 'rgba(35, 209, 96, 0.15)',
+            pointBackgroundColor: '#23d160',
+            pointBorderColor: '#23d160',
+            pointRadius: 4,
+            pointHoverRadius: 5,
+            fill: true,
+            tension: 0.25
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Pontos Entregues' }
+            },
+            x: {
+              title: { display: true, text: 'Sprints' }
             }
           }
-        });
-      }
+        }
+      });
+    }
 
-      const taskPieCanvas = document.getElementById('taskTypePieChartConsolidated');
-      const pointsPieCanvas = document.getElementById('pointsTypePieChartConsolidated');
-      const colors = ['#3273dc', '#b86bff', '#ff3860', '#ffdd57', '#23d160', '#3298dc', '#4a4a4a', '#6c757d', '#adb5bd'];
-      const labelsTasks = TASK_TYPES.filter(type => taskTypeCounts[type] > 0);
-      const dataTasks = labelsTasks.map(type => taskTypeCounts[type]);
-      const labelsPoints = TASK_TYPES.filter(type => taskTypePoints[type] > 0);
-      const dataPoints = labelsPoints.map(type => taskTypePoints[type]);
+    const taskPieCanvas = document.getElementById('taskTypePieChartConsolidated');
+    const pointsPieCanvas = document.getElementById('pointsTypePieChartConsolidated');
+    const colors = ['#3273dc', '#b86bff', '#ff3860', '#ffdd57', '#23d160', '#3298dc', '#4a4a4a', '#6c757d', '#adb5bd'];
+    const labelsTasks = TASK_TYPES.filter(type => taskTypeCounts[type] > 0);
+    const dataTasks = labelsTasks.map(type => taskTypeCounts[type]);
+    const labelsPoints = TASK_TYPES.filter(type => taskTypePoints[type] > 0);
+    const dataPoints = labelsPoints.map(type => taskTypePoints[type]);
 
-      if (taskPieCanvas && dataTasks.length) {
-        consolidatedTaskTypeChart = new Chart(taskPieCanvas, { type: 'pie', data: { labels: labelsTasks, datasets: [{ data: dataTasks, backgroundColor: colors.slice(0, dataTasks.length) }] }, options: { responsive: true, maintainAspectRatio: false } });
-      }
-      if (pointsPieCanvas && dataPoints.length) {
-        consolidatedPointsTypeChart = new Chart(pointsPieCanvas, { type: 'pie', data: { labels: labelsPoints, datasets: [{ data: dataPoints, backgroundColor: colors.slice(0, dataPoints.length) }] }, options: { responsive: true, maintainAspectRatio: false } });
-      }
+    if (taskPieCanvas && dataTasks.length) {
+      consolidatedTaskTypeChart = new Chart(taskPieCanvas, { type: 'pie', data: { labels: labelsTasks, datasets: [{ data: dataTasks, backgroundColor: colors.slice(0, dataTasks.length) }] }, options: { responsive: true, maintainAspectRatio: false } });
+    }
+    if (pointsPieCanvas && dataPoints.length) {
+      consolidatedPointsTypeChart = new Chart(pointsPieCanvas, { type: 'pie', data: { labels: labelsPoints, datasets: [{ data: dataPoints, backgroundColor: colors.slice(0, dataPoints.length) }] }, options: { responsive: true, maintainAspectRatio: false } });
     }
   }
+
   openModal(consolidatedReportViewModalEl);
 }
 

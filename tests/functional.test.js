@@ -66,7 +66,7 @@ function loadApp() {
     }
   };
 
-  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, calculateSprintProductivityAverage, buildDashboardDatasets, getSprintTasksExportRows, duplicateSprintData, getSprintVisualStatus, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
+  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, getSprintsByTeam, calculateSprintProductivityAverage, buildDashboardDatasets, getSprintTasksExportRows, duplicateSprintData, getSprintVisualStatus, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
 
   return sandbox.module.exports;
 }
@@ -257,4 +257,19 @@ test('getSprintVisualStatus retorna cor/estado conforme fase da sprint', () => {
   assert.equal(complete.headerColor, '#23d160');
   assert.equal(incomplete.key, 'incomplete');
   assert.equal(incomplete.headerColor, '#ff3860');
+});
+
+
+test('getSprintsByTeam retorna apenas sprints do time selecionado', () => {
+  const app = loadApp();
+  app.setSprints([
+    { id: 's1', team: 'Time A' },
+    { id: 's2', team: 'Time B' },
+    { id: 's3', team: 'Time A' }
+  ]);
+
+  const result = app.getSprintsByTeam('Time A');
+  assert.equal(result.length, 2);
+  assert.equal(result[0].id, 's1');
+  assert.equal(result[1].id, 's3');
 });
