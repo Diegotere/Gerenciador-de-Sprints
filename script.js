@@ -412,7 +412,7 @@ function renderSprints() {
 
   teamNames.forEach((teamName) => {
     const teamWrapper = document.createElement('section');
-    teamWrapper.className = 'box mb-5';
+    teamWrapper.className = 'box mb-5 is-fullwidth';
     teamWrapper.style.border = '1px solid #d5e7f5';
     teamWrapper.innerHTML = `<h3 class="title is-5 mb-4 has-text-link">${teamName}</h3><div class="columns is-multiline is-variable is-4" data-team-grid="${teamName}"></div>`;
     const teamGrid = teamWrapper.querySelector('[data-team-grid]');
