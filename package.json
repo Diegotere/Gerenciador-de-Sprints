@@ -1,0 +1,6 @@
+{
+  "name": "Gerenciador-de-sprints",
+  "scripts": {
+    "start": "npx serve -p $PORT"
+  }
+}
