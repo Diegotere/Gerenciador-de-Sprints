@@ -12,14 +12,22 @@ let sprintsEvolutionChartConsolidated = null;
 let productivityEvolutionChart = null;
 let sprintVelocityChart = null;
 let deliveredPointsEvolutionChart = null;
+let sprintsDashboardChart = null;
 
 const sprintGrid = document.getElementById('sprintGrid');
+const sprintProductivityDashboardCanvas = document.getElementById('sprintProductivityDashboardChart');
+const sprintsDashboardEmptyMessage = document.getElementById('sprintsDashboardEmptyMessage');
+const dashboardCalcInfoBtn = document.getElementById('dashboardCalcInfoBtn');
+const dashboardCalcInfoModalEl = document.getElementById('dashboardCalcInfoModal');
+const closeDashboardCalcInfoModalBtn = document.getElementById('closeDashboardCalcInfoModalBtn');
+const closeDashboardCalcInfoModalXBtn = document.getElementById('closeDashboardCalcInfoModalXBtn');
 const addSprintBtn = document.getElementById('addSprintBtn');
 const sprintModalEl = document.getElementById('sprintModal');
 const sprintModalTitleEl = document.getElementById('sprintModalTitleLabel');
 const sprintForm = document.getElementById('sprintForm');
 const sprintIdInput = document.getElementById('sprintId');
 const sprintNameInput = document.getElementById('sprintName');
+const sprintTeamInput = document.getElementById('sprintTeam');
 const sprintSemesterInput = document.getElementById('sprintSemester');
 const sprintStartDateInput = document.getElementById('sprintStartDate');
 const sprintEndDateInput = document.getElementById('sprintEndDate');
@@ -56,6 +64,10 @@ const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 const closeDeleteConfirmModalXBtn = document.getElementById('closeDeleteConfirmModalXBtn');
 const noSprintsMessage = document.getElementById('noSprintsMessage');
+const noSprintsTitle = document.getElementById('noSprintsTitle');
+const noSprintsSubtitle = document.getElementById('noSprintsSubtitle');
+const teamFilterSelect = document.getElementById('teamFilter');
+const semesterFilterSelect = document.getElementById('semesterFilter');
 const exportDataJsonBtn = document.getElementById('exportDataJsonBtn');
 const importDataBtnTrigger = document.getElementById('importDataBtnTrigger');
 const importFileEl = document.getElementById('importFile');
@@ -92,8 +104,21 @@ function showAppNotification(message, type = 'is-info') {
 function openModal(el) { if (el) { el.classList.add('is-active'); document.documentElement.classList.add('is-clipped'); } }
 function closeModal(el) { if (el) el.classList.remove('is-active'); if (!document.querySelector('.modal.is-active')) document.documentElement.classList.remove('is-clipped'); }
 
+function normalizeImportedSprintData(rawSprint) {
+  const normalizedSprint = { ...(rawSprint || {}) };
+  normalizedSprint.team = String(normalizedSprint.team || '').trim();
+  normalizedSprint.semester = normalizedSprint.semester || inferSemesterFromDate(normalizedSprint.startDate);
+  normalizedSprint.tasks = Array.isArray(normalizedSprint.tasks) ? normalizedSprint.tasks : [];
+  return normalizedSprint;
+}
+
 function loadSprints() {
-  try { sprints = JSON.parse(localStorage.getItem('sprints_data_v1') || '[]'); } catch { sprints = []; }
+  try {
+    const data = JSON.parse(localStorage.getItem('sprints_data_v1') || '[]');
+    sprints = Array.isArray(data) ? data.map(normalizeImportedSprintData) : [];
+  } catch {
+    sprints = [];
+  }
 }
 function saveSprints() { localStorage.setItem('sprints_data_v1', JSON.stringify(sprints)); }
 
@@ -118,6 +143,131 @@ function inferSemesterFromDate(dateStr) {
   return month <= 6 ? '1° Semestre' : '2° Semestre';
 }
 
+function getSprintSemester(sprint) {
+  return sprint.semester || inferSemesterFromDate(sprint.startDate);
+}
+
+function getAvailableTeams() {
+  return [...new Set(sprints.map((sprint) => String(sprint.team || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+function populateTeamFilterOptions() {
+  if (!teamFilterSelect) return;
+  const selectedTeam = teamFilterSelect.value || 'all';
+  const teamOptions = getAvailableTeams();
+  teamFilterSelect.innerHTML = `<option value="all">Todos os times</option>${teamOptions.map((team) => `<option value="${team}">${team}</option>`).join('')}`;
+  teamFilterSelect.value = teamOptions.includes(selectedTeam) ? selectedTeam : 'all';
+}
+
+function updateSemesterFilterState() {
+  if (!semesterFilterSelect) return;
+  semesterFilterSelect.disabled = false;
+}
+
+function getFilteredSprints() {
+  const selectedTeam = teamFilterSelect?.value || 'all';
+  const selectedSemester = semesterFilterSelect?.value || 'all';
+
+  return sprints.filter((sprint) => {
+    const matchesTeam = selectedTeam === 'all' || String(sprint.team || '').trim() === selectedTeam;
+    const matchesSemester = selectedSemester === 'all' || getSprintSemester(sprint) === selectedSemester;
+    return matchesTeam && matchesSemester;
+  });
+}
+
+function getSprintsByTeam(teamName) {
+  return sprints.filter((sprint) => String(sprint.team || '').trim() === teamName);
+}
+
+function calculateSprintProductivityAverage(sprint) {
+  const tasks = Array.isArray(sprint?.tasks) ? sprint.tasks : [];
+  const scoredTasks = tasks.filter((task) => Number(task?.points) > 0);
+  if (!scoredTasks.length) return 0;
+  const totalPoints = scoredTasks.reduce((sum, task) => sum + (Number(task.points) || 0), 0);
+  return Number((totalPoints / scoredTasks.length).toFixed(2));
+}
+
+function buildDashboardDatasets(filteredSprints) {
+  const sortedSprints = [...filteredSprints].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  const labels = sortedSprints.map((sprint) => sprint.name || 'Sprint');
+  const teams = [...new Set(sortedSprints.map((sprint) => String(sprint.team || 'Sem Time').trim() || 'Sem Time'))];
+  const palette = ['#3273dc', '#23d160', '#ff3860', '#b86bff', '#ffdd57', '#3298dc', '#ff9f43'];
+
+  const datasets = teams.map((team, idx) => ({
+    label: team,
+    data: sortedSprints.map((sprint) => {
+      const sprintTeam = String(sprint.team || 'Sem Time').trim() || 'Sem Time';
+      return sprintTeam === team ? calculateSprintProductivityAverage(sprint) : null;
+    }),
+    borderColor: palette[idx % palette.length],
+    backgroundColor: `${palette[idx % palette.length]}33`,
+    borderWidth: 2,
+    spanGaps: true,
+    tension: 0.25
+  }));
+
+  return { labels, datasets };
+}
+
+function renderSprintsDashboard(filteredSprints) {
+  if (sprintsDashboardChart) { sprintsDashboardChart.destroy(); sprintsDashboardChart = null; }
+  if (!window.Chart || !sprintProductivityDashboardCanvas) return;
+
+  const { labels, datasets } = buildDashboardDatasets(filteredSprints);
+  const hasData = datasets.some((dataset) => dataset.data.some((value) => value !== null));
+
+  if (!hasData) {
+    sprintProductivityDashboardCanvas.style.display = 'none';
+    if (sprintsDashboardEmptyMessage) sprintsDashboardEmptyMessage.classList.remove('is-hidden');
+    return;
+  }
+
+  sprintProductivityDashboardCanvas.style.display = 'block';
+  if (sprintsDashboardEmptyMessage) sprintsDashboardEmptyMessage.classList.add('is-hidden');
+
+  sprintsDashboardChart = new Chart(sprintProductivityDashboardCanvas, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Média de produtividade (pontos por tarefa pontuada)' }
+        },
+        x: {
+          title: { display: true, text: 'Evolução das sprints (ordem cronológica)' }
+        }
+      }
+    }
+  });
+}
+
+function getSprintTasksExportRows(sprint) {
+  const header = ['Nome da Tarefa', 'Tipo', 'Pontos', 'Observação', 'Status', 'Concluída?'];
+  const tasks = Array.isArray(sprint?.tasks) ? sprint.tasks : [];
+  const rows = tasks.map((task) => ([
+    task?.name || '',
+    task?.type || '',
+    Number(task?.points) || 0,
+    task?.observation || '',
+    task?.status || '',
+    task?.isCompleted ? 'Sim' : 'Não'
+  ]));
+  return [header, ...rows];
+}
+
+function duplicateSprintData(sourceSprint) {
+  const sourceTasks = Array.isArray(sourceSprint?.tasks) ? sourceSprint.tasks : [];
+  return {
+    ...JSON.parse(JSON.stringify(sourceSprint || {})),
+    id: crypto.randomUUID(),
+    name: `${sourceSprint?.name || 'Sprint'} (Cópia)`,
+    tasks: sourceTasks.map((task) => ({ ...JSON.parse(JSON.stringify(task)), id: crypto.randomUUID() }))
+  };
+}
+
 function calculateSprintStats(sprint) {
   const tasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
   const ppm = Number(sprint.manualPlannedPoints) || 0;
@@ -125,9 +275,26 @@ function calculateSprintStats(sprint) {
   const removedPoints = tasks.filter(t => t.status === 'Removida').reduce((s, t) => s + (Number(t.points) || 0), 0);
   const notDeliveredPoints = tasks.filter(t => t.status !== 'Removida' && !t.isCompleted).reduce((s, t) => s + (Number(t.points) || 0), 0);
   const tasksInScope = tasks.filter(t => t.status !== 'Removida');
-  const isGoalMet = tasksInScope.length > 0 && tasksInScope.every(t => t.isCompleted);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const endDate = sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`) : null;
+  const hasEnded = !!(endDate && !Number.isNaN(endDate.getTime()) && today > endDate);
+  const isGoalMet = hasEnded && tasksInScope.length > 0 && tasksInScope.every(t => t.isCompleted);
+  const sprintOutcome = !hasEnded ? 'ongoing' : isGoalMet ? 'complete' : 'incomplete';
   const deliveredPoints = (ppm + includedPoints) - (removedPoints + notDeliveredPoints);
-  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
+  return { ppm, includedPoints, removedPoints, notDeliveredPoints, deliveredPoints, isGoalMet, hasEnded, sprintOutcome, totalTasks: tasks.length, sprintName: sprint.name || 'Sprint' };
+}
+
+function getSprintVisualStatus(sprint, stats) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startDate = sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`) : null;
+  const notStarted = !!(startDate && !Number.isNaN(startDate.getTime()) && today < startDate);
+
+  if (notStarted) return { key: 'not_started', label: 'Sprint não iniciada', textClass: 'has-text-link', headerColor: '#3273dc' };
+  if (stats.sprintOutcome === 'complete') return { key: 'complete', label: 'Sprint Completa', textClass: 'has-text-success', headerColor: '#23d160' };
+  if (stats.sprintOutcome === 'incomplete') return { key: 'incomplete', label: 'Sprint Incompleta', textClass: 'has-text-danger', headerColor: '#ff3860' };
+  return { key: 'ongoing', label: 'Sprint em andamento', textClass: 'has-text-warning', headerColor: '#ff9800' };
 }
 
 function updateTaskCompletedStateByStatus(status) {
@@ -200,6 +367,7 @@ function openNewSprintModal() {
   sprintModalTitleEl.textContent = 'Nova Sprint';
   sprintForm.reset();
   sprintIdInput.value = '';
+  if (sprintTeamInput) sprintTeamInput.value = '';
   if (sprintSemesterInput) sprintSemesterInput.value = '';
   tasksForCurrentSprintForm = [];
   renderTasksInSprintForm();
@@ -209,62 +377,108 @@ function openNewSprintModal() {
 
 function renderSprints() {
   sprintGrid.innerHTML = '';
-  if (sprints.length === 0) {
+  populateTeamFilterOptions();
+  updateSemesterFilterState();
+  const filteredSprints = getFilteredSprints();
+
+  if (filteredSprints.length === 0) {
+    if (sprints.length === 0) {
+      if (noSprintsTitle) noSprintsTitle.textContent = 'Nenhuma sprint cadastrada';
+      if (noSprintsSubtitle) noSprintsSubtitle.textContent = 'Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".';
+    } else {
+      const selectedTeam = teamFilterSelect?.value || 'all';
+      const selectedSemester = semesterFilterSelect?.value || 'all';
+      if (noSprintsTitle) noSprintsTitle.textContent = 'Nenhuma sprint encontrada para o filtro selecionado';
+      if (noSprintsSubtitle) noSprintsSubtitle.textContent = `Não há sprints para ${selectedTeam === 'all' ? 'os times selecionados' : selectedTeam}${selectedSemester === 'all' ? '' : ` no ${selectedSemester}`}.`;
+    }
     noSprintsMessage.classList.remove('is-hidden');
     sprintGrid.classList.add('is-hidden');
+    renderSprintsDashboard(filteredSprints);
     return;
   }
+
   noSprintsMessage.classList.add('is-hidden');
   sprintGrid.classList.remove('is-hidden');
+  renderSprintsDashboard(filteredSprints);
 
-  [...sprints].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
-    const stats = calculateSprintStats(sprint);
-    const displayIdentifier = sprint.name || (sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric'}) : 'Sprint');
+  const groupedByTeam = filteredSprints.reduce((acc, sprint) => {
+    const team = String(sprint.team || 'Sem Time').trim() || 'Sem Time';
+    if (!acc[team]) acc[team] = [];
+    acc[team].push(sprint);
+    return acc;
+  }, {});
 
-    const columnDiv = document.createElement('div');
-    columnDiv.className = 'column is-one-third-desktop is-half-tablet';
-    columnDiv.innerHTML = `
-      <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="Editar sprint ${displayIdentifier}">
-        <header class="card-header" style="background-color: #00609C; box-shadow: none;">
-          <p class="card-header-title has-text-white is-justify-content-space-between">
-            <span class="is-truncated" title="${displayIdentifier}">${displayIdentifier}</span>
-            <span class="dropdown is-hoverable is-right">
-              <span class="dropdown-trigger">
-                <button class="button is-small is-primary is-inverted is-outlined" aria-haspopup="true" aria-controls="dropdown-sprint-card" style="border:none;background-color:transparent !important;">
-                  <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
-                </button>
+  const teamNames = Object.keys(groupedByTeam).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  teamNames.forEach((teamName) => {
+    const teamWrapper = document.createElement('section');
+    teamWrapper.className = 'box mb-5 is-fullwidth';
+    teamWrapper.style.border = '1px solid #d5e7f5';
+    teamWrapper.innerHTML = `<h3 class="title is-5 mb-4 has-text-link">${teamName}</h3><div class="columns is-multiline is-variable is-4" data-team-grid="${teamName}"></div>`;
+    const teamGrid = teamWrapper.querySelector('[data-team-grid]');
+
+    [...groupedByTeam[teamName]].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).forEach((sprint) => {
+      const stats = calculateSprintStats(sprint);
+      const visualStatus = getSprintVisualStatus(sprint, stats);
+      const displayIdentifier = sprint.name || (sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric'}) : 'Sprint');
+
+      const columnDiv = document.createElement('div');
+      columnDiv.className = 'column is-half-mobile is-one-third-tablet is-one-quarter-desktop';
+      columnDiv.innerHTML = `
+        <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="Editar sprint ${displayIdentifier}">
+          <header class="card-header" style="background-color: ${visualStatus.headerColor}; box-shadow: none;">
+            <p class="card-header-title has-text-white is-justify-content-space-between">
+              <span class="is-truncated" title="${displayIdentifier}">${displayIdentifier}</span>
+              <span class="dropdown is-hoverable is-right">
+                <span class="dropdown-trigger">
+                  <button class="button is-small is-primary is-inverted is-outlined" aria-haspopup="true" aria-controls="dropdown-sprint-card" style="border:none;background-color:transparent !important;">
+                    <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
+                  </button>
+                </span>
+                <span class="dropdown-menu" role="menu">
+                  <span class="dropdown-content">
+                    <a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a>
+                    <a href="#" class="dropdown-item duplicate-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-files me-2"></i>Duplicar</a>
+                    <a href="#" class="dropdown-item export-sprint-excel-btn" data-sprint-id="${sprint.id}"><i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel</a>
+                    <a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a>
+                  </span>
+                </span>
               </span>
-              <span class="dropdown-menu" role="menu"><span class="dropdown-content"><a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a><a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a></span></span>
-            </span>
-          </p>
-        </header>
-        <div class="card-content"><div class="content is-small has-text-grey">
-          <p><strong>Início:</strong> ${sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
-          <p><strong>Fim:</strong> ${sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
-          <p><strong>Planejado:</strong> ${sprint.manualPlannedPoints || 0} pts</p>
-          <p><strong>Colaboradores:</strong> ${sprint.totalCollaborators || 'N/A'}</p>
-          <p><strong>Dias Úteis:</strong> ${sprint.workingDays || 'N/A'}</p>
-          <p><strong>Tarefas:</strong> ${Array.isArray(sprint.tasks) ? sprint.tasks.length : 0}</p>
-        </div></div>
-        <footer class="card-footer"><p class="card-footer-item ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'} is-size-7 has-text-weight-semibold">${stats.isGoalMet ? 'Sprint Completa <i class="bi bi-check-circle-fill"></i>' : 'Sprint Incompleta <i class="bi bi-x-circle-fill"></i>'}</p><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
-      </div>`;
+            </p>
+          </header>
+          <div class="card-content"><div class="content is-small has-text-grey">
+            <p><strong>Status:</strong> <span class="${visualStatus.textClass}">${visualStatus.label}</span></p>
+            <p><strong>Início:</strong> ${sprint.startDate ? new Date(`${sprint.startDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
+            <p><strong>Fim:</strong> ${sprint.endDate ? new Date(`${sprint.endDate}T00:00:00`).toLocaleDateString('pt-BR') : 'N/D'}</p>
+            <p><strong>Planejado:</strong> ${sprint.manualPlannedPoints || 0} pts</p>
+            <p><strong>Colaboradores:</strong> ${sprint.totalCollaborators || 'N/A'}</p>
+            <p><strong>Dias Úteis:</strong> ${sprint.workingDays || 'N/A'}</p>
+            <p><strong>Tarefas:</strong> ${Array.isArray(sprint.tasks) ? sprint.tasks.length : 0}</p>
+          </div></div>
+          <footer class="card-footer"><a href="#" class="card-footer-item view-report-btn has-text-link is-size-7" data-sprint-id="${sprint.id}">Ver Relatório</a></footer>
+        </div>`;
 
-    const card = columnDiv.querySelector('.sprint-card-clickable');
-    card.addEventListener('click', (event) => {
-      if (event.target.closest('.edit-sprint-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
-      handleEditSprintRequest({ currentTarget: card });
-    });
-    card.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
+      const card = columnDiv.querySelector('.sprint-card-clickable');
+      card.addEventListener('click', (event) => {
+        if (event.target.closest('.edit-sprint-btn, .duplicate-sprint-btn, .export-sprint-excel-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
         handleEditSprintRequest({ currentTarget: card });
-      }
+      });
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleEditSprintRequest({ currentTarget: card });
+        }
+      });
+
+      teamGrid.appendChild(columnDiv);
     });
 
-    sprintGrid.appendChild(columnDiv);
+    sprintGrid.appendChild(teamWrapper);
   });
 
   document.querySelectorAll('.edit-sprint-btn').forEach(btn => btn.addEventListener('click', handleEditSprintRequest));
+  document.querySelectorAll('.duplicate-sprint-btn').forEach(btn => btn.addEventListener('click', handleDuplicateSprintRequest));
+  document.querySelectorAll('.export-sprint-excel-btn').forEach(btn => btn.addEventListener('click', handleExportSprintExcelRequest));
   document.querySelectorAll('.delete-sprint-btn').forEach(btn => btn.addEventListener('click', handleDeleteSprintRequest));
   document.querySelectorAll('.view-report-btn').forEach(btn => btn.addEventListener('click', handleViewReportRequest));
 }
@@ -277,6 +491,7 @@ function handleEditSprintRequest(e) {
   sprintModalTitleEl.textContent = 'Editar Sprint';
   sprintIdInput.value = sprint.id;
   sprintNameInput.value = sprint.name || '';
+  if (sprintTeamInput) sprintTeamInput.value = sprint.team || '';
   if (sprintSemesterInput) sprintSemesterInput.value = sprint.semester || inferSemesterFromDate(sprint.startDate);
   sprintStartDateInput.value = sprint.startDate || '';
   sprintEndDateInput.value = sprint.endDate || '';
@@ -288,6 +503,32 @@ function handleEditSprintRequest(e) {
   renderTasksInSprintForm();
   resetTaskForm();
   openModal(sprintModalEl);
+}
+
+function handleDuplicateSprintRequest(e) {
+  const sprintId = e.currentTarget.dataset.sprintId;
+  const sprint = sprints.find(s => s.id === sprintId);
+  if (!sprint) return;
+  const duplicatedSprint = duplicateSprintData(sprint);
+  sprints.push(duplicatedSprint);
+  saveSprints();
+  renderSprints();
+  showAppNotification('Sprint duplicada com sucesso!', 'is-success');
+}
+
+function handleExportSprintExcelRequest(e) {
+  const sprintId = e.currentTarget.dataset.sprintId;
+  const sprint = sprints.find(s => s.id === sprintId);
+  if (!sprint) return;
+
+  const rows = getSprintTasksExportRows(sprint);
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Tarefas');
+
+  const sprintLabel = String(sprint.name || 'sprint').replace(/[^a-zA-Z0-9-_]+/g, '_').slice(0, 80) || 'sprint';
+  XLSX.writeFile(workbook, `${sprintLabel}_tarefas.xlsx`);
+  showAppNotification('Sprint exportada para Excel com sucesso!', 'is-success');
 }
 
 function handleDeleteSprintRequest(e) { sprintToDeleteId = e.currentTarget.dataset.sprintId; openModal(deleteConfirmModalEl); }
@@ -344,7 +585,7 @@ function handleViewReportRequest(e) {
     : '';
 
   sprintReportContent.innerHTML = `
-    <h3 class="title is-4 mb-5 ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'}">${stats.isGoalMet ? 'Sprint Batida!' : 'Sprint Não Batida'}</h3>
+    <h3 class="title is-4 mb-5 ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'}">${stats.sprintOutcome === 'complete' ? 'Sprint Batida!' : stats.sprintOutcome === 'incomplete' ? 'Sprint Não Batida' : 'Sprint em andamento'}</h3>
     ${sprintObservationHtml}
     <div class="mb-5">
       <h4 class="subtitle is-5 has-text-primary mb-3">Resumo da Sprint</h4>
@@ -355,7 +596,7 @@ function handleViewReportRequest(e) {
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Não Entregues</p><p class="title is-5 has-text-danger mb-0">${stats.notDeliveredPoints || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Pontos Entregues</p><p class="title is-5 has-text-success mb-0">${stats.deliveredPoints || 0}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Total de Tarefas</p><p class="title is-5 mb-0">${stats.totalTasks || 0}</p></div></div>
-        <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Entregue o Planejado?</p><p class="title is-5 ${stats.isGoalMet ? 'has-text-success' : 'has-text-danger'} mb-0">${stats.isGoalMet ? 'Sim' : 'Não'}</p></div></div>
+        <div class="column is-half-mobile is-one-third-tablet"><div class="box p-3"><p class="heading is-size-7">Entregue o Planejado?</p><p class="title is-5 ${stats.sprintOutcome === 'complete' ? 'has-text-success' : stats.sprintOutcome === 'incomplete' ? 'has-text-danger' : 'has-text-warning'} mb-0">${stats.sprintOutcome === 'complete' ? 'Sim' : stats.sprintOutcome === 'incomplete' ? 'Não' : 'Em andamento'}</p></div></div>
       </div>
     </div>
     <div>
@@ -373,148 +614,166 @@ function handleConsolidatedReport() {
   if (sprintVelocityChart) { sprintVelocityChart.destroy(); sprintVelocityChart = null; }
   if (deliveredPointsEvolutionChart) { deliveredPointsEvolutionChart.destroy(); deliveredPointsEvolutionChart = null; }
 
-  if (sprints.length === 0) {
+  const teams = getAvailableTeams();
+  if (!teams.length) {
     consolidatedReportViewContent.innerHTML = '<p class="has-text-centered has-text-grey is-italic">Nenhuma sprint cadastrada para gerar o resumo.</p>';
-  } else {
-    let totalTasksOverall = 0;
-    let totalDeliveredPointsOverall = 0;
-    let totalScopePointsOverall = 0;
-    const taskTypeCounts = {};
-    const taskTypePoints = {};
-    TASK_TYPES.forEach(type => {
-      taskTypeCounts[type] = 0;
-      taskTypePoints[type] = 0;
+    openModal(consolidatedReportViewModalEl);
+    return;
+  }
+
+  const currentTeam = document.getElementById('consolidatedTeamFilter')?.value;
+  const selectedTeam = teams.includes(currentTeam) ? currentTeam : teams[0];
+  const teamSprints = getSprintsByTeam(selectedTeam);
+
+  let totalTasksOverall = 0;
+  let totalDeliveredPointsOverall = 0;
+  let totalScopePointsOverall = 0;
+  const taskTypeCounts = {};
+  const taskTypePoints = {};
+  TASK_TYPES.forEach(type => {
+    taskTypeCounts[type] = 0;
+    taskTypePoints[type] = 0;
+  });
+
+  teamSprints.forEach(sprint => {
+    const stats = calculateSprintStats(sprint);
+    const scopePoints = (stats.ppm || 0) + (stats.includedPoints || 0) - (stats.removedPoints || 0);
+    totalTasksOverall += (Array.isArray(sprint.tasks) ? sprint.tasks.filter(t => t.status !== 'Removida').length : 0);
+    totalDeliveredPointsOverall += stats.deliveredPoints || 0;
+    totalScopePointsOverall += scopePoints;
+
+    (Array.isArray(sprint.tasks) ? sprint.tasks : []).forEach(task => {
+      if (task.status !== 'Removida') {
+        if (taskTypeCounts[task.type] !== undefined) taskTypeCounts[task.type] += 1;
+        if (taskTypePoints[task.type] !== undefined) taskTypePoints[task.type] += (Number(task.points) || 0);
+      }
     });
+  });
 
-    sprints.forEach(sprint => {
-      const stats = calculateSprintStats(sprint);
-      const scopePoints = (stats.ppm || 0) + (stats.includedPoints || 0) - (stats.removedPoints || 0);
-      totalTasksOverall += (Array.isArray(sprint.tasks) ? sprint.tasks.filter(t => t.status !== 'Removida').length : 0);
-      totalDeliveredPointsOverall += stats.deliveredPoints || 0;
-      totalScopePointsOverall += scopePoints;
+  const averageTasksPerSprint = teamSprints.length ? (totalTasksOverall / teamSprints.length).toFixed(1) : '0.0';
+  const averagePointsPerSprint = teamSprints.length ? (totalDeliveredPointsOverall / teamSprints.length).toFixed(1) : '0.0';
+  const averagePointsPerTask = totalTasksOverall ? (totalDeliveredPointsOverall / totalTasksOverall).toFixed(1) : '0.0';
+  const averageCompletionRate = totalScopePointsOverall > 0 ? Math.max(0, (totalDeliveredPointsOverall / totalScopePointsOverall) * 100).toFixed(1) : '0.0';
 
-      (Array.isArray(sprint.tasks) ? sprint.tasks : []).forEach(task => {
-        if (task.status !== 'Removida') {
-          if (taskTypeCounts[task.type] !== undefined) taskTypeCounts[task.type] += 1;
-          if (taskTypePoints[task.type] !== undefined) taskTypePoints[task.type] += (Number(task.points) || 0);
-        }
+  consolidatedReportViewContent.innerHTML = `
+    <div class="field mb-4">
+      <label class="label">Time do resumo</label>
+      <div class="control" style="max-width: 320px;">
+        <div class="select is-fullwidth">
+          <select id="consolidatedTeamFilter">${teams.map((team) => `<option value="${team}" ${team === selectedTeam ? 'selected' : ''}>${team}</option>`).join('')}</select>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 class="title is-5 has-text-primary mb-3">Estatísticas Gerais - ${selectedTeam}</h3>
+      <div class="columns is-multiline is-mobile mb-5">
+        <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-sprints"><p class="stat-card-title">Total de Sprints</p><p class="stat-card-value">${teamSprints.length}</p></div></div>
+        <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-tasks"><p class="stat-card-title">Total de Tarefas (Escopo)</p><p class="stat-card-value">${totalTasksOverall}</p></div></div>
+        <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-delivered-points"><p class="stat-card-title">Total de Pontos Entregues</p><p class="stat-card-value">${totalDeliveredPointsOverall}</p></div></div>
+        <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card avg-completion-rate"><p class="stat-card-title">Taxa Média de Conclusão</p><p class="stat-card-value">${averageCompletionRate}%</p></div></div>
+      </div>
+
+      <h3 class="title is-5 has-text-primary mb-3">Médias por Sprint</h3>
+      <div class="columns is-multiline is-mobile mb-5">
+        <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-tasks"><p class="stat-card-title">Média de Tarefas por Sprint</p><p class="stat-card-value">${averageTasksPerSprint}</p></div></div>
+        <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-points"><p class="stat-card-title">Média de Pontos por Sprint</p><p class="stat-card-value">${averagePointsPerSprint}</p></div></div>
+        <div class="column is-full-mobile is-one-third-tablet"><div class="stat-card avg-points-per-task"><p class="stat-card-title">Média de Pontos por Tarefa</p><p class="stat-card-value">${averagePointsPerTask}</p></div></div>
+      </div>
+
+      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Velocidade (Planejado vs. Entregue)</h4><div style="height: 350px;"><canvas id="sprintVelocityChartCanvas"></canvas></div></div>
+      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Evolução de Pontos Entregues por Sprint</h4><div style="height: 300px;"><canvas id="deliveredPointsEvolutionChart"></canvas></div></div>
+      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Evolução de Produtividade</h4><div style="height: 300px;"><canvas id="productivityEvolutionChart"></canvas></div></div>
+      <div class="columns">
+        <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Tarefas por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="taskTypePieChartConsolidated"></canvas></div></div></div>
+        <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Pontos por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="pointsTypePieChartConsolidated"></canvas></div></div></div>
+      </div>
+    </div>`;
+
+  document.getElementById('consolidatedTeamFilter')?.addEventListener('change', handleConsolidatedReport);
+
+  if (window.Chart) {
+    const sorted = [...teamSprints].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    const labels = sorted.map(s => calculateSprintStats(s).sprintName);
+    const planned = sorted.map(s => calculateSprintStats(s).ppm || 0);
+    const delivered = sorted.map(s => calculateSprintStats(s).deliveredPoints || 0);
+    const avgDelivered = delivered.length ? delivered.reduce((a, b) => a + b, 0) / delivered.length : 0;
+
+    const velocityCanvas = document.getElementById('sprintVelocityChartCanvas');
+    if (velocityCanvas) {
+      sprintVelocityChart = new Chart(velocityCanvas, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Planejado', data: planned, backgroundColor: 'rgba(255, 204, 153, 0.7)', borderColor: 'rgba(255, 204, 153, 1)', borderWidth: 1 },
+            { label: 'Entregue', data: delivered, backgroundColor: 'rgba(163, 217, 163, 0.7)', borderColor: 'rgba(163, 217, 163, 1)', borderWidth: 1 },
+            { label: `Média Entregue (${avgDelivered.toFixed(2)})`, data: labels.map(() => avgDelivered.toFixed(2)), type: 'line', borderColor: 'rgba(77, 175, 77, 1)', fill: false, tension: 0, pointRadius: 0, borderWidth: 2 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
       });
-    });
+    }
 
-    const averageTasksPerSprint = (totalTasksOverall / sprints.length).toFixed(1);
-    const averagePointsPerSprint = (totalDeliveredPointsOverall / sprints.length).toFixed(1);
-    const averagePointsPerTask = totalTasksOverall ? (totalDeliveredPointsOverall / totalTasksOverall).toFixed(1) : '0.0';
-    const averageCompletionRate = totalScopePointsOverall > 0 ? Math.max(0, (totalDeliveredPointsOverall / totalScopePointsOverall) * 100).toFixed(1) : '0.0';
+    const productivityCanvas = document.getElementById('productivityEvolutionChart');
+    if (productivityCanvas) {
+      productivityEvolutionChart = new Chart(productivityCanvas, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => (calculateSprintStats(s).deliveredPoints / ((parseFloat(s.totalCollaborators) || 1) * (parseInt(s.workingDays, 10) || 1))).toFixed(2)), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
 
-    consolidatedReportViewContent.innerHTML = `
-      <div>
-        <h3 class="title is-5 has-text-primary mb-3">Estatísticas Gerais</h3>
-        <div class="columns is-multiline is-mobile mb-5">
-          <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-sprints"><p class="stat-card-title">Total de Sprints</p><p class="stat-card-value">${sprints.length}</p></div></div>
-          <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-tasks"><p class="stat-card-title">Total de Tarefas (Escopo)</p><p class="stat-card-value">${totalTasksOverall}</p></div></div>
-          <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card total-delivered-points"><p class="stat-card-title">Total de Pontos Entregues</p><p class="stat-card-value">${totalDeliveredPointsOverall}</p></div></div>
-          <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card avg-completion-rate"><p class="stat-card-title">Taxa Média de Conclusão</p><p class="stat-card-value">${averageCompletionRate}%</p></div></div>
-        </div>
-
-        <h3 class="title is-5 has-text-primary mb-3">Médias por Sprint</h3>
-        <div class="columns is-multiline is-mobile mb-5">
-          <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-tasks"><p class="stat-card-title">Média de Tarefas por Sprint</p><p class="stat-card-value">${averageTasksPerSprint}</p></div></div>
-          <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-points"><p class="stat-card-title">Média de Pontos por Sprint</p><p class="stat-card-value">${averagePointsPerSprint}</p></div></div>
-          <div class="column is-full-mobile is-one-third-tablet"><div class="stat-card avg-points-per-task"><p class="stat-card-title">Média de Pontos por Tarefa</p><p class="stat-card-value">${averagePointsPerTask}</p></div></div>
-        </div>
-
-        <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Velocidade (Planejado vs. Entregue)</h4><div style="height: 350px;"><canvas id="sprintVelocityChartCanvas"></canvas></div></div>
-        <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Evolução de Pontos Entregues por Sprint</h4><div style="height: 300px;"><canvas id="deliveredPointsEvolutionChart"></canvas></div></div>
-        <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Evolução de Produtividade</h4><div style="height: 300px;"><canvas id="productivityEvolutionChart"></canvas></div></div>
-        <div class="columns">
-          <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Tarefas por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="taskTypePieChartConsolidated"></canvas></div></div></div>
-          <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Pontos por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="pointsTypePieChartConsolidated"></canvas></div></div></div>
-        </div>
-      </div>`;
-
-    if (window.Chart) {
-      const sorted = [...sprints].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-      const labels = sorted.map(s => calculateSprintStats(s).sprintName);
-      const planned = sorted.map(s => calculateSprintStats(s).ppm || 0);
-      const delivered = sorted.map(s => calculateSprintStats(s).deliveredPoints || 0);
-      const avgDelivered = delivered.length ? delivered.reduce((a, b) => a + b, 0) / delivered.length : 0;
-
-      const velocityCanvas = document.getElementById('sprintVelocityChartCanvas');
-      if (velocityCanvas) {
-        sprintVelocityChart = new Chart(velocityCanvas, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [
-              { label: 'Planejado', data: planned, backgroundColor: 'rgba(255, 204, 153, 0.7)', borderColor: 'rgba(255, 204, 153, 1)', borderWidth: 1 },
-              { label: 'Entregue', data: delivered, backgroundColor: 'rgba(163, 217, 163, 0.7)', borderColor: 'rgba(163, 217, 163, 1)', borderWidth: 1 },
-              { label: `Média Entregue (${avgDelivered.toFixed(2)})`, data: labels.map(() => avgDelivered.toFixed(2)), type: 'line', borderColor: 'rgba(77, 175, 77, 1)', fill: false, tension: 0, pointRadius: 0, borderWidth: 2 }
-            ]
-          },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
-        });
-      }
-
-      const productivityCanvas = document.getElementById('productivityEvolutionChart');
-      if (productivityCanvas) {
-        productivityEvolutionChart = new Chart(productivityCanvas, {
-          type: 'line',
-          data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => (calculateSprintStats(s).deliveredPoints / ((parseFloat(s.totalCollaborators) || 1) * (parseInt(s.workingDays, 10) || 1))).toFixed(2)), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
-      }
-
-      const deliveredEvolutionCanvas = document.getElementById('deliveredPointsEvolutionChart');
-      if (deliveredEvolutionCanvas) {
-        deliveredPointsEvolutionChart = new Chart(deliveredEvolutionCanvas, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Pontos Entregues',
-              data: delivered,
-              borderColor: '#23d160',
-              backgroundColor: 'rgba(35, 209, 96, 0.15)',
-              pointBackgroundColor: '#23d160',
-              pointBorderColor: '#23d160',
-              pointRadius: 4,
-              pointHoverRadius: 5,
-              fill: true,
-              tension: 0.25
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Pontos Entregues' }
-              },
-              x: {
-                title: { display: true, text: 'Sprints' }
-              }
+    const deliveredEvolutionCanvas = document.getElementById('deliveredPointsEvolutionChart');
+    if (deliveredEvolutionCanvas) {
+      deliveredPointsEvolutionChart = new Chart(deliveredEvolutionCanvas, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Pontos Entregues',
+            data: delivered,
+            borderColor: '#23d160',
+            backgroundColor: 'rgba(35, 209, 96, 0.15)',
+            pointBackgroundColor: '#23d160',
+            pointBorderColor: '#23d160',
+            pointRadius: 4,
+            pointHoverRadius: 5,
+            fill: true,
+            tension: 0.25
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Pontos Entregues' }
+            },
+            x: {
+              title: { display: true, text: 'Sprints' }
             }
           }
-        });
-      }
+        }
+      });
+    }
 
-      const taskPieCanvas = document.getElementById('taskTypePieChartConsolidated');
-      const pointsPieCanvas = document.getElementById('pointsTypePieChartConsolidated');
-      const colors = ['#3273dc', '#b86bff', '#ff3860', '#ffdd57', '#23d160', '#3298dc', '#4a4a4a', '#6c757d', '#adb5bd'];
-      const labelsTasks = TASK_TYPES.filter(type => taskTypeCounts[type] > 0);
-      const dataTasks = labelsTasks.map(type => taskTypeCounts[type]);
-      const labelsPoints = TASK_TYPES.filter(type => taskTypePoints[type] > 0);
-      const dataPoints = labelsPoints.map(type => taskTypePoints[type]);
+    const taskPieCanvas = document.getElementById('taskTypePieChartConsolidated');
+    const pointsPieCanvas = document.getElementById('pointsTypePieChartConsolidated');
+    const colors = ['#3273dc', '#b86bff', '#ff3860', '#ffdd57', '#23d160', '#3298dc', '#4a4a4a', '#6c757d', '#adb5bd'];
+    const labelsTasks = TASK_TYPES.filter(type => taskTypeCounts[type] > 0);
+    const dataTasks = labelsTasks.map(type => taskTypeCounts[type]);
+    const labelsPoints = TASK_TYPES.filter(type => taskTypePoints[type] > 0);
+    const dataPoints = labelsPoints.map(type => taskTypePoints[type]);
 
-      if (taskPieCanvas && dataTasks.length) {
-        consolidatedTaskTypeChart = new Chart(taskPieCanvas, { type: 'pie', data: { labels: labelsTasks, datasets: [{ data: dataTasks, backgroundColor: colors.slice(0, dataTasks.length) }] }, options: { responsive: true, maintainAspectRatio: false } });
-      }
-      if (pointsPieCanvas && dataPoints.length) {
-        consolidatedPointsTypeChart = new Chart(pointsPieCanvas, { type: 'pie', data: { labels: labelsPoints, datasets: [{ data: dataPoints, backgroundColor: colors.slice(0, dataPoints.length) }] }, options: { responsive: true, maintainAspectRatio: false } });
-      }
+    if (taskPieCanvas && dataTasks.length) {
+      consolidatedTaskTypeChart = new Chart(taskPieCanvas, { type: 'pie', data: { labels: labelsTasks, datasets: [{ data: dataTasks, backgroundColor: colors.slice(0, dataTasks.length) }] }, options: { responsive: true, maintainAspectRatio: false } });
+    }
+    if (pointsPieCanvas && dataPoints.length) {
+      consolidatedPointsTypeChart = new Chart(pointsPieCanvas, { type: 'pie', data: { labels: labelsPoints, datasets: [{ data: dataPoints, backgroundColor: colors.slice(0, dataPoints.length) }] }, options: { responsive: true, maintainAspectRatio: false } });
     }
   }
+
   openModal(consolidatedReportViewModalEl);
 }
 
@@ -556,7 +815,7 @@ function handleImportData(event) {
       const importedData = JSON.parse(e.target.result);
       if (!Array.isArray(importedData)) throw new Error('JSON inválido');
       if (confirm('Tem certeza que deseja substituir todos os dados atuais?')) {
-        sprints = importedData.map(s => ({ ...s, tasks: Array.isArray(s.tasks) ? s.tasks : [] }));
+        sprints = importedData.map(normalizeImportedSprintData);
         saveSprints();
         renderSprints();
         showAppNotification('Dados importados com sucesso!', 'is-success');
@@ -638,6 +897,9 @@ document.addEventListener('DOMContentLoaded', () => {
   cancelSprintModalBtn?.addEventListener('click', () => closeModal(sprintModalEl));
   closeSprintModalXBtn?.addEventListener('click', () => closeModal(sprintModalEl));
   closeSprintReportModalXBtn?.addEventListener('click', () => closeModal(sprintReportModalEl));
+  dashboardCalcInfoBtn?.addEventListener('click', () => openModal(dashboardCalcInfoModalEl));
+  closeDashboardCalcInfoModalBtn?.addEventListener('click', () => closeModal(dashboardCalcInfoModalEl));
+  closeDashboardCalcInfoModalXBtn?.addEventListener('click', () => closeModal(dashboardCalcInfoModalEl));
   closeConsolidatedReportViewModalXBtn?.addEventListener('click', () => {
     if (consolidatedTaskTypeChart) { consolidatedTaskTypeChart.destroy(); consolidatedTaskTypeChart = null; }
     if (consolidatedPointsTypeChart) { consolidatedPointsTypeChart.destroy(); consolidatedPointsTypeChart = null; }
@@ -657,6 +919,8 @@ document.addEventListener('DOMContentLoaded', () => {
   importTasksFileEl?.addEventListener('change', handleImportTasksFromFile);
   sprintStartDateInput?.addEventListener('change', updateWorkingDaysField);
   sprintEndDateInput?.addEventListener('change', updateWorkingDaysField);
+  teamFilterSelect?.addEventListener('change', renderSprints);
+  semesterFilterSelect?.addEventListener('change', renderSprints);
   printSprintReportBtn?.addEventListener('click', () => printReport('sprintReportContent'));
   printConsolidatedReportBtn?.addEventListener('click', () => printReport('consolidatedReportViewContent'));
 
@@ -681,6 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sprintData = {
       id: sprintIdInput.value || crypto.randomUUID(),
       name: sprintNameInput.value.trim(),
+      team: sprintTeamInput?.value.trim() || '',
       semester: sprintSemesterInput?.value || '',
       startDate: sprintStartDateInput.value,
       endDate: sprintEndDateInput.value,
@@ -690,7 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sprintObservation: sprintObservationInput.value.trim(),
       tasks: [...tasksForCurrentSprintForm]
     };
-    if (!sprintData.name || !sprintData.semester || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome, semestre e datas da sprint.', 'is-danger');
+    if (!sprintData.name || !sprintData.team || !sprintData.semester || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome, time, semestre e datas da sprint.', 'is-danger');
     if (new Date(sprintData.startDate) > new Date(sprintData.endDate)) return showAppNotification('A data inicial não pode ser posterior à final.', 'is-danger');
 
     if (currentEditingSprintId) {
