@@ -24,8 +24,6 @@ const closeDashboardCalcInfoModalXBtn = document.getElementById('closeDashboardC
 const addSprintBtn = document.getElementById('addSprintBtn');
 const mainNavbarMenu = document.getElementById('mainNavbarMenu');
 const navbarBurgerBtn = document.querySelector('.navbar-burger');
-const darkModeToggleBtn = document.getElementById('darkModeToggleBtn');
-const darkModeToggleBtnText = document.getElementById('darkModeToggleBtnText');
 const sprintModalEl = document.getElementById('sprintModal');
 const sprintModalTitleEl = document.getElementById('sprintModalTitleLabel');
 const sprintForm = document.getElementById('sprintForm');
@@ -108,11 +106,15 @@ function showAppNotification(message, type = 'is-info') {
 function applyTheme(theme) {
   const isDark = theme === 'dark';
   document.body.classList.toggle('dark-mode', isDark);
-  if (darkModeToggleBtnText) darkModeToggleBtnText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
-  if (darkModeToggleBtn) {
-    const icon = darkModeToggleBtn.querySelector('i');
+  const themeToggleButtons = document.querySelectorAll('#darkModeToggleBtn');
+  themeToggleButtons.forEach((button) => {
+    const textLabel = button.querySelector('#darkModeToggleBtnText');
+    if (textLabel) textLabel.remove();
+    const icon = button.querySelector('i');
     if (icon) icon.className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-  }
+    button.setAttribute('title', isDark ? 'Alternar para tema claro' : 'Alternar para tema escuro');
+    button.setAttribute('aria-label', isDark ? 'Alternar para tema claro' : 'Alternar para tema escuro');
+  });
 }
 
 function getStoredTheme() {
@@ -913,13 +915,22 @@ function updateWorkingDaysField() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const duplicateThemeToggles = document.querySelectorAll('#darkModeToggleBtn');
+  if (duplicateThemeToggles.length > 1) {
+    duplicateThemeToggles.forEach((button, index) => {
+      if (index < duplicateThemeToggles.length - 1) button.remove();
+    });
+  }
+
   applyTheme(getStoredTheme());
   loadSprints();
   populateTaskFormElements();
   renderSprints();
 
   closeNotificationBtn?.addEventListener('click', () => appNotificationEl.classList.add('is-hidden'));
-  darkModeToggleBtn?.addEventListener('click', toggleTheme);
+  document.querySelectorAll('#darkModeToggleBtn').forEach((button) => {
+    button.addEventListener('click', toggleTheme);
+  });
   navbarBurgerBtn?.addEventListener('click', () => {
     navbarBurgerBtn.classList.toggle('is-active');
     mainNavbarMenu?.classList.toggle('is-active');
