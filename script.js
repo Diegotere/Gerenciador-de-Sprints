@@ -22,6 +22,10 @@ const dashboardCalcInfoModalEl = document.getElementById('dashboardCalcInfoModal
 const closeDashboardCalcInfoModalBtn = document.getElementById('closeDashboardCalcInfoModalBtn');
 const closeDashboardCalcInfoModalXBtn = document.getElementById('closeDashboardCalcInfoModalXBtn');
 const addSprintBtn = document.getElementById('addSprintBtn');
+const mainNavbarMenu = document.getElementById('mainNavbarMenu');
+const navbarBurgerBtn = document.querySelector('.navbar-burger');
+const darkModeToggleBtn = document.getElementById('darkModeToggleBtn');
+const darkModeToggleBtnText = document.getElementById('darkModeToggleBtnText');
 const sprintModalEl = document.getElementById('sprintModal');
 const sprintModalTitleEl = document.getElementById('sprintModalTitleLabel');
 const sprintForm = document.getElementById('sprintForm');
@@ -99,6 +103,27 @@ function showAppNotification(message, type = 'is-info') {
   appNotificationEl.classList.remove('is-hidden');
   clearTimeout(notificationTimeout);
   notificationTimeout = setTimeout(() => appNotificationEl.classList.add('is-hidden'), 4500);
+}
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  document.body.classList.toggle('dark-mode', isDark);
+  if (darkModeToggleBtnText) darkModeToggleBtnText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  if (darkModeToggleBtn) {
+    const icon = darkModeToggleBtn.querySelector('i');
+    if (icon) icon.className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+  }
+}
+
+function getStoredTheme() {
+  const stored = localStorage.getItem('app_theme_v1');
+  return stored === 'dark' ? 'dark' : 'light';
+}
+
+function toggleTheme() {
+  const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+  localStorage.setItem('app_theme_v1', nextTheme);
+  applyTheme(nextTheme);
 }
 
 function openModal(el) { if (el) { el.classList.add('is-active'); document.documentElement.classList.add('is-clipped'); } }
@@ -888,11 +913,17 @@ function updateWorkingDaysField() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(getStoredTheme());
   loadSprints();
   populateTaskFormElements();
   renderSprints();
 
   closeNotificationBtn?.addEventListener('click', () => appNotificationEl.classList.add('is-hidden'));
+  darkModeToggleBtn?.addEventListener('click', toggleTheme);
+  navbarBurgerBtn?.addEventListener('click', () => {
+    navbarBurgerBtn.classList.toggle('is-active');
+    mainNavbarMenu?.classList.toggle('is-active');
+  });
   addSprintBtn?.addEventListener('click', openNewSprintModal);
   cancelSprintModalBtn?.addEventListener('click', () => closeModal(sprintModalEl));
   closeSprintModalXBtn?.addEventListener('click', () => closeModal(sprintModalEl));

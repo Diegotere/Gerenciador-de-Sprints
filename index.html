@@ -43,6 +43,10 @@
                                 <span class="icon"><i class="bi bi-file-earmark-text-fill"></i></span>
                                 <span id="consolidatedReportBtnText">Resumo das sprints</span>
                             </button>
+                            <button id="darkModeToggleBtn" class="button is-dark is-light" type="button" aria-label="Alternar tema escuro">
+                                <span class="icon"><i class="bi bi-moon-stars-fill"></i></span>
+                                <span id="darkModeToggleBtnText">Dark Mode</span>
+                            </button>
                             <div class="dropdown is-hoverable is-right" id="dataActionsDropdown">
                                 <div class="dropdown-trigger">
                                     <button class="button is-link is-light" aria-haspopup="true" aria-controls="dropdown-menu-data">
@@ -131,7 +135,7 @@
             <form id="sprintForm">
                 <header class="modal-card-head has-background-primary">
                     <p class="modal-card-title has-text-white" id="sprintModalTitleLabel">Nova Sprint</p>
-                    <button class="delete" aria-label="close" id="closeSprintModalXBtn"></button>
+                    <button type="button" class="delete" aria-label="close" id="closeSprintModalXBtn"></button>
                 </header>
                 <section class="modal-card-body">
                     <input type="hidden" id="sprintId">
