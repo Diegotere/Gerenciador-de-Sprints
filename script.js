@@ -210,8 +210,14 @@ function calculateSprintProductivityAverage(sprint) {
   const tasks = Array.isArray(sprint?.tasks) ? sprint.tasks : [];
   const scoredTasks = tasks.filter((task) => Number(task?.points) > 0);
   if (!scoredTasks.length) return 0;
+
+  const collaborators = Number(sprint?.totalCollaborators) || 0;
+  const workingDays = Number(sprint?.workingDays) || 0;
+  if (collaborators <= 0 || workingDays <= 0) return 0;
+
   const totalPoints = scoredTasks.reduce((sum, task) => sum + (Number(task.points) || 0), 0);
-  return Number((totalPoints / scoredTasks.length).toFixed(2));
+  const productivity = totalPoints / (scoredTasks.length * collaborators * workingDays);
+  return Number(productivity.toFixed(4));
 }
 
 function buildDashboardDatasets(filteredSprints) {
@@ -261,7 +267,7 @@ function renderSprintsDashboard(filteredSprints) {
       scales: {
         y: {
           beginAtZero: true,
-          title: { display: true, text: 'Média de produtividade (pontos por tarefa pontuada)' }
+          title: { display: true, text: 'Produtividade média (pontos por tarefa pontuada por colaborador/dia útil)' }
         },
         x: {
           title: { display: true, text: 'Evolução das sprints (ordem cronológica)' }

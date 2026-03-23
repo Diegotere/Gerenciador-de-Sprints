@@ -179,9 +179,11 @@ test('duplicateSprintData cria cópia com novos ids e mantém dados principais',
 });
 
 
-test('calculateSprintProductivityAverage considera somente tarefas pontuadas', () => {
+test('calculateSprintProductivityAverage considera tarefas pontuadas, colaboradores e dias úteis', () => {
   const app = loadApp();
   const productivity = app.calculateSprintProductivityAverage({
+    totalCollaborators: 2,
+    workingDays: 5,
     tasks: [
       { points: 8 },
       { points: 0 },
@@ -190,14 +192,32 @@ test('calculateSprintProductivityAverage considera somente tarefas pontuadas', (
     ]
   });
 
-  assert.equal(productivity, 6);
+  assert.equal(productivity, 0.6);
+});
+
+test('calculateSprintProductivityAverage retorna 0 sem colaboradores ou dias úteis válidos', () => {
+  const app = loadApp();
+  const productivityWithoutCollaborators = app.calculateSprintProductivityAverage({
+    totalCollaborators: 0,
+    workingDays: 5,
+    tasks: [{ points: 8 }, { points: 4 }]
+  });
+
+  const productivityWithoutWorkingDays = app.calculateSprintProductivityAverage({
+    totalCollaborators: 2,
+    workingDays: 0,
+    tasks: [{ points: 8 }, { points: 4 }]
+  });
+
+  assert.equal(productivityWithoutCollaborators, 0);
+  assert.equal(productivityWithoutWorkingDays, 0);
 });
 
 test('buildDashboardDatasets separa linhas por time e respeita ordem cronológica', () => {
   const app = loadApp();
   const { labels, datasets } = app.buildDashboardDatasets([
-    { name: 'Sprint B', team: 'Time A', startDate: '2026-02-01', tasks: [{ points: 6 }] },
-    { name: 'Sprint A', team: 'Time B', startDate: '2026-01-01', tasks: [{ points: 10 }, { points: 0 }] }
+    { name: 'Sprint B', team: 'Time A', startDate: '2026-02-01', totalCollaborators: 1, workingDays: 1, tasks: [{ points: 6 }] },
+    { name: 'Sprint A', team: 'Time B', startDate: '2026-01-01', totalCollaborators: 1, workingDays: 1, tasks: [{ points: 10 }, { points: 0 }] }
   ]);
 
   assert.equal(labels.length, 2);
