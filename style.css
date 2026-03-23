@@ -18,6 +18,44 @@ body {
     background-color: #f8f9fa; 
 }
 
+body.dark-mode {
+    background-color: #1f232b !important;
+    color: #e8ecf1;
+}
+body.dark-mode .box,
+body.dark-mode .card,
+body.dark-mode .modal-card,
+body.dark-mode .input,
+body.dark-mode .textarea,
+body.dark-mode .select select,
+body.dark-mode .table {
+    background-color: #2b313b !important;
+    color: #e8ecf1 !important;
+    border-color: #3d4552 !important;
+}
+body.dark-mode .label,
+body.dark-mode .title,
+body.dark-mode .subtitle,
+body.dark-mode .content,
+body.dark-mode p,
+body.dark-mode strong,
+body.dark-mode .heading,
+body.dark-mode td,
+body.dark-mode th {
+    color: #e8ecf1 !important;
+}
+body.dark-mode .navbar-menu.is-active {
+    background-color: #004A7A;
+}
+body.dark-mode .dropdown-content,
+body.dark-mode .dropdown-item {
+    background-color: #2b313b !important;
+    color: #e8ecf1 !important;
+}
+body.dark-mode .dropdown-item:hover {
+    background-color: #3a4351 !important;
+}
+
 .navbar.is-primary {
     background: linear-gradient(135deg, var(--custom-primary-dark), var(--custom-primary));
 }
