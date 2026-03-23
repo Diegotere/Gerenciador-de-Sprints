@@ -41,6 +41,10 @@
                                 <span class="icon"><i class="bi bi-file-earmark-text-fill"></i></span>
                                 <span id="consolidatedReportBtnText">Resumo das sprints</span>
                             </button>
+                            <button id="darkModeToggleBtn" class="button is-dark is-light" type="button" aria-label="Alternar tema escuro">
+                                <span class="icon"><i class="bi bi-moon-stars-fill"></i></span>
+                                <span id="darkModeToggleBtnText">Dark Mode</span>
+                            </button>
                             <div class="dropdown is-hoverable is-right" id="dataActionsDropdown">
                                 <div class="dropdown-trigger">
                                     <button class="button is-link is-light" aria-haspopup="true" aria-controls="dropdown-menu-data">
@@ -66,13 +70,58 @@
     <input type="file" id="importFile" accept=".json" class="is-hidden">
 
     <section class="section">
-        <div class="container">
-            <main id="sprintGrid" class="columns is-multiline is-variable is-4"></main>
+        <div class="container is-fluid px-4">
+            <div class="columns mb-2">
+                <div class="column is-4">
+                    <div class="field mb-4">
+                        <label class="label" for="teamFilter">Filtrar por time</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="teamFilter">
+                                    <option value="all">Todos os times</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-4">
+                    <div class="field mb-4">
+                        <label class="label" for="semesterFilter">Filtrar por semestre do time</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="semesterFilter">
+                                    <option value="all">Todos os semestres</option>
+                                    <option value="1° Semestre">1° Semestre</option>
+                                    <option value="2° Semestre">2° Semestre</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <main id="sprintGrid" class="sprint-groups"></main>
+
+            <section id="sprintsDashboardSection" class="mt-5">
+                <div class="box">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
+                        <h3 class="title is-5 has-text-primary mb-0">Dashboard de Evolução das Sprints</h3>
+                        <button type="button" id="dashboardCalcInfoBtn" class="button is-white is-small" title="Como calculamos" aria-label="Como calculamos">
+                            <span class="icon is-small has-text-grey"><i class="bi bi-info-circle"></i></span>
+                        </button>
+                    </div>
+                    <p class="is-size-7 has-text-grey mb-3">Média de produtividade por sprint (somente tarefas pontuadas).</p>
+                    <div style="height: 320px;">
+                        <canvas id="sprintProductivityDashboardChart"></canvas>
+                    </div>
+                    <p id="sprintsDashboardEmptyMessage" class="is-hidden has-text-centered has-text-grey is-italic mt-4">Sem dados suficientes para montar o gráfico com os filtros atuais.</p>
+                </div>
+            </section>
+
             <div id="noSprintsMessage" class="is-hidden has-text-centered py-6 card mt-4">
                 <div class="card-content">
                     <p class="icon is-large has-text-grey-light"><i class="bi bi-folder-x" style="font-size: 3rem;"></i></p>
-                    <p class="title is-5 has-text-grey">Nenhuma sprint cadastrada</p>
-                    <p class="subtitle is-6 has-text-grey-light">Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".</p>
+                    <p id="noSprintsTitle" class="title is-5 has-text-grey">Nenhuma sprint cadastrada</p>
+                    <p id="noSprintsSubtitle" class="subtitle is-6 has-text-grey-light">Comece cadastrando uma nova sprint utilizando o botão "+ Nova Sprint".</p>
                 </div>
             </div>
         </div>
@@ -84,12 +133,12 @@
             <form id="sprintForm">
                 <header class="modal-card-head has-background-primary">
                     <p class="modal-card-title has-text-white" id="sprintModalTitleLabel">Nova Sprint</p>
-                    <button class="delete" aria-label="close" id="closeSprintModalXBtn"></button>
+                    <button type="button" class="delete" aria-label="close" id="closeSprintModalXBtn"></button>
                 </header>
                 <section class="modal-card-body">
                     <input type="hidden" id="sprintId">
                     <div class="columns">
-                        <div class="column is-two-thirds">
+                        <div class="column is-half">
                             <div class="field">
                                 <label for="sprintName" class="label">Nome da Sprint</label>
                                 <div class="control">
@@ -97,7 +146,15 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="column is-one-third">
+                        <div class="column is-one-quarter">
+                            <div class="field">
+                                <label for="sprintTeam" class="label">Time</label>
+                                <div class="control">
+                                    <input type="text" id="sprintTeam" required class="input" placeholder="Ex: Time A">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-one-quarter">
                             <div class="field">
                                 <label for="sprintSemester" class="label">Semestre</label>
                                 <div class="control">
@@ -211,6 +268,8 @@
     <div class="modal" id="consolidatedReportViewModal"><div class="modal-background"></div><div class="modal-card" style="width: 1200px; max-width: 95vw;"><header class="modal-card-head has-background-primary"><p class="modal-card-title has-text-white" id="consolidatedReportModalTitleLabel">Resumo das sprints</p><div class="buttons are-small ml-auto"><button type="button" id="printConsolidatedReportBtn" class="button is-light print-this-section"><span class="icon"><i class="bi bi-printer-fill"></i></span><span>Imprimir</span></button></div><button class="delete" aria-label="close" id="closeConsolidatedReportViewModalXBtn"></button></header><section class="modal-card-body" id="consolidatedReportViewContent"></section></div></div>
 
     <div class="modal" id="deleteConfirmModal"><div class="modal-background"></div><div class="modal-card" style="max-width: 480px;"><header class="modal-card-head"><p class="modal-card-title">Confirmar Exclusão</p><button class="delete" aria-label="close" id="closeDeleteConfirmModalXBtn"></button></header><section class="modal-card-body"><p>Tem certeza que deseja excluir esta sprint e todas as suas tarefas? Esta ação não pode ser desfeita.</p></section><footer class="modal-card-foot is-justify-content-flex-end"><button id="cancelDeleteBtn" type="button" class="button">Cancelar</button><button id="confirmDeleteBtn" type="button" class="button is-danger">Excluir</button></footer></div></div>
+
+    <div class="modal" id="dashboardCalcInfoModal"><div class="modal-background"></div><div class="modal-card" style="max-width: 700px;"><header class="modal-card-head"><p class="modal-card-title">Como calculamos a produtividade</p><button class="delete" aria-label="close" id="closeDashboardCalcInfoModalXBtn"></button></header><section class="modal-card-body"><div class="content"><p>Para cada sprint, usamos apenas tarefas pontuadas (pontos maiores que zero).</p><p><strong>Fórmula:</strong> Média de Produtividade = (Soma dos pontos das tarefas pontuadas) ÷ (Quantidade de tarefas pontuadas).</p><p>Exemplo: tarefas com 8, 4 e 0 pontos resultam em média <strong>6</strong>, pois a tarefa com 0 não entra no cálculo.</p></div></section><footer class="modal-card-foot is-justify-content-flex-end"><button type="button" id="closeDashboardCalcInfoModalBtn" class="button is-primary">Entendi</button></footer></div></div>
     
     <div id="appNotification" class="notification is-hidden" style="position: fixed; top: 70px; right: 20px; z-index: 1100; min-width: 300px;"><button class="delete" id="closeNotificationBtn"></button><span id="notificationBody"></span></div>
 
