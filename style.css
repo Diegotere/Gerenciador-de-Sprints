@@ -180,6 +180,26 @@ body.dark-mode .dropdown-item:hover {
 .dropdown-menu .bi {
     margin-right: 0.5rem;
 }
+#dataActionsDropdown {
+    position: relative;
+}
+#dataActionsDropdown .dropdown-menu {
+    z-index: 1200;
+}
+
+@media screen and (max-width: 1023px) {
+    .navbar.is-fixed-top,
+    .navbar-menu.is-active {
+        z-index: 1100;
+    }
+    .navbar-menu.is-active {
+        overflow: visible;
+    }
+    #dataActionsDropdown .dropdown-menu {
+        z-index: 1200;
+    }
+}
+
 .hover-shadow:hover {
     box-shadow: 0 0.75em 1.5em -0.125em rgba(10,10,10,.15), 0 0 0 1px rgba(10,10,10,.03);
 }
