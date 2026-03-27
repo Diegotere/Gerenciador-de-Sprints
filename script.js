@@ -13,6 +13,11 @@ let productivityEvolutionChart = null;
 let sprintVelocityChart = null;
 let deliveredPointsEvolutionChart = null;
 let sprintsDashboardChart = null;
+let currentSessionUserEmail = '';
+const DATA_ACTIONS_ALLOWED_EMAILS = new Set([
+  'diego.dsn.erp@alterdata.com.br',
+  'diegotere@yahoo.com.br'
+]);
 
 const sprintGrid = document.getElementById('sprintGrid');
 const sprintProductivityDashboardCanvas = document.getElementById('sprintProductivityDashboardChart');
@@ -73,6 +78,7 @@ const semesterFilterSelect = document.getElementById('semesterFilter');
 const exportDataJsonBtn = document.getElementById('exportDataJsonBtn');
 const importDataBtnTrigger = document.getElementById('importDataBtnTrigger');
 const importFileEl = document.getElementById('importFile');
+const dataActionsDropdown = document.getElementById('dataActionsDropdown');
 const logoutBtn = document.getElementById('logoutBtn');
 const appNotificationEl = document.getElementById('appNotification');
 const notificationBodyEl = document.getElementById('notificationBody');
@@ -140,11 +146,11 @@ async function apiRequest(url, options = {}) {
 
 async function ensureAuthenticatedSession() {
   try {
-    await apiRequest('/api/auth/session', { method: 'GET' });
-    return true;
+    const result = await apiRequest('/api/auth/session', { method: 'GET' });
+    return result?.user || null;
   } catch {
     window.location.href = '/login.html';
-    return false;
+    return null;
   }
 }
 
@@ -160,6 +166,16 @@ async function handleLogout() {
 
 function openModal(el) { if (el) { el.classList.add('is-active'); document.documentElement.classList.add('is-clipped'); } }
 function closeModal(el) { if (el) el.classList.remove('is-active'); if (!document.querySelector('.modal.is-active')) document.documentElement.classList.remove('is-clipped'); }
+
+function canAccessDataActions(email) {
+  return DATA_ACTIONS_ALLOWED_EMAILS.has(String(email || '').trim().toLowerCase());
+}
+
+function updateDataActionsVisibility() {
+  if (!dataActionsDropdown) return;
+  const hasAccess = canAccessDataActions(currentSessionUserEmail);
+  dataActionsDropdown.classList.toggle('is-hidden', !hasAccess);
+}
 
 function normalizeImportedSprintData(rawSprint) {
   const normalizedSprint = { ...(rawSprint || {}) };
@@ -993,8 +1009,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  const isAuthenticated = await ensureAuthenticatedSession();
-  if (!isAuthenticated) return;
+  const authenticatedUser = await ensureAuthenticatedSession();
+  if (!authenticatedUser) return;
+  currentSessionUserEmail = String(authenticatedUser.email || '').trim().toLowerCase();
+  updateDataActionsVisibility();
 
   applyTheme(getStoredTheme());
   await loadSprints();
@@ -1028,9 +1046,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   cancelDeleteBtn?.addEventListener('click', () => closeModal(deleteConfirmModalEl));
   closeDeleteConfirmModalXBtn?.addEventListener('click', () => closeModal(deleteConfirmModalEl));
   consolidatedReportBtn?.addEventListener('click', handleConsolidatedReport);
-  exportDataJsonBtn?.addEventListener('click', exportDataToJson);
-  importDataBtnTrigger?.addEventListener('click', () => importFileEl.click());
-  importFileEl?.addEventListener('change', handleImportData);
+  if (canAccessDataActions(currentSessionUserEmail)) {
+    exportDataJsonBtn?.addEventListener('click', exportDataToJson);
+    importDataBtnTrigger?.addEventListener('click', () => importFileEl.click());
+    importFileEl?.addEventListener('change', handleImportData);
+  }
   logoutBtn?.addEventListener('click', handleLogout);
   triggerImportTasksFileBtn?.addEventListener('click', () => importTasksFileEl.click());
   importTasksFileEl?.addEventListener('change', handleImportTasksFromFile);
