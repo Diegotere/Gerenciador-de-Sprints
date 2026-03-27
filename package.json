@@ -1,0 +1,13 @@
+{
+  "name": "Gerenciador-de-sprints",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "serve -s . -p $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.0.0"
+  }
+  "scripts": {
+    "start": "node server.js"
+  }
+}

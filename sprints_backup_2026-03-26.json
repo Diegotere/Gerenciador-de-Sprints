@@ -1,0 +1,1750 @@
+[
+  {
+    "id": "59797898-6925-4d4e-87ed-e0cee8119ddd",
+    "name": "03/2026 - Faturamento",
+    "team": "Faturamento",
+    "semester": "1° Semestre",
+    "startDate": "2026-03-02",
+    "endDate": "2026-03-21",
+    "manualPlannedPoints": 140,
+    "totalCollaborators": 0,
+    "workingDays": 15,
+    "sprintObservation": "",
+    "tasks": [
+      {
+        "id": "86e60dbc-b609-43d1-a8ab-7d37dc972e04",
+        "name": "FAT30340",
+        "type": "Novo Recurso",
+        "points": 8,
+        "observation": "01 - [DUIMP]  - Consulta e Preenchimento do Documento. [Subir para develop oculto]",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "f0f93f1d-6e3c-494b-b2e5-1a6c18f87c79",
+        "name": "FAT30341",
+        "type": "Novo Recurso",
+        "points": 13,
+        "observation": "02 - [DUIMP]  - Geração de nota fiscal de entrada a partir de uma DUIMP [Subir para develop oculto]",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "08703047-32bd-40c6-832d-7938f773d5c1",
+        "name": "FAT32057",
+        "type": "Melhoria",
+        "points": 0,
+        "observation": "[Pontuação 13] Implementação do recurso de criação de vendas a partir de um pedido de vendas no módu",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "ef158541-37d7-4e0b-813c-e9428016a061",
+        "name": "FAT32802",
+        "type": "Legislação",
+        "points": 13,
+        "observation": "[Somente programação] Emissão da Nota de Débito de Pagamento Antecipado (Tipo 06)",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "d8c8c644-2ca7-4a40-912a-c2a26d712ac6",
+        "name": "FAT33201",
+        "type": "Melhoria",
+        "points": 3,
+        "observation": "[Eventos] Implementação do \"Entenda como funciona\" na rotina de Gerenciador de Eventos do Faturament",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "489272a0-0716-4b75-9ebc-7122ca962606",
+        "name": "FAT33237",
+        "type": "Erro",
+        "points": 5,
+        "observation": "[REFORMA] - Após o ajuste nos códigos de serviço e de município, os documentos já criados ou integra",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "5dac9135-fbdc-4029-a78f-d6641c9a9d71",
+        "name": "FAT33307",
+        "type": "Erro",
+        "points": 5,
+        "observation": "[REFORMA] - Rejeição ao enviar uma NFse de substituição: chSubstda' element is invalid - The value '",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "cca1c0a1-4a42-40c8-b80d-d16d01f1391b",
+        "name": "FAT33348",
+        "type": "Legislação",
+        "points": 8,
+        "observation": "[REFORMA] Adequação do módulo DI para Reforma Tributária",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "fcd922d7-f4a2-4df1-b6a6-98c792b39944",
+        "name": "FAT33519",
+        "type": "Melhoria",
+        "points": 13,
+        "observation": "[Análise técnica] 0183121513 -  NFCom - Funcionalidade de gerar uma Nota Fiscal de Comunicação (NFCo",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "e70f3313-f24f-41cb-b334-af4cc6baa645",
+        "name": "FAT33568",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "[NFS-e] Destaque de PIS/COFINS em notas fiscais de serviço para pessoa física.",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "1c6d5441-1b71-4a2a-9508-73be8f6bd217",
+        "name": "FAT33626",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "[NFS-e] Campo \"Responsável pela Retenção do ISS / Tipo de Responsável\"",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "ededf2aa-da83-4473-8f0d-15fd7ba98d86",
+        "name": "FAT33631",
+        "type": "Erro",
+        "points": 3,
+        "observation": "[NF-e] Alíquota de ICMS dentro do item no faturamento não altera para valor diferente do calculo de ",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "7081bc18-f998-4877-b76e-303513c922a3",
+        "name": "FAT33782",
+        "type": "Melhoria",
+        "points": 8,
+        "observation": "[Somente programação] Liberador de documento - Possibilidade de conferir item com mais de um lote",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "126c9dfb-7097-44a4-9831-efcbffbb5dcf",
+        "name": "FAT33819",
+        "type": "Legislação",
+        "points": 0,
+        "observation": "[Análise] NFSe - Nota Técnica Nº 007 - Versão 1.0",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "7cb469bc-c6f1-4574-a22e-d1d1fcfe2aca",
+        "name": "FAT33820",
+        "type": "Legislação",
+        "points": 3,
+        "observation": "[ESPECIAL] 0183357031 - Emissão de nota com o CFOP 5.405 com o CST 090.",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "adcbaa05-dd8a-4f88-a1d6-69ed0e8199d1",
+        "name": "FAT33872",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "[NFS-e] A tag TipoRetencaoPisCofins está ficando com o valor 1, porém o cliente precisa que saia com",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "c2f4379b-51db-466a-abab-d54a1b696064",
+        "name": "FAT33908",
+        "type": "Novo Recurso",
+        "points": 8,
+        "observation": "[Eventos] Exploratório do Novo Recurso de Eventos da NF-e",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "cf500f5b-bf02-496d-b2c9-f7b1b64eb141",
+        "name": "FAT33910",
+        "type": "Novo Recurso",
+        "points": 13,
+        "observation": "03 - [DUIMP] Geração de nota de entrada a partir de DUIMP, com produto que controla série.",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "288fd9aa-18f7-4469-ba40-f6fac4448705",
+        "name": "FAT33971",
+        "type": "Merge",
+        "points": 3,
+        "observation": "[MERGE] 0183357031 - Emissão de nota com o CFOP 5.405 com o CST 090.",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "a6bc89a5-3f43-4ced-ad54-17883f8f2aa8",
+        "name": "FAT33973",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Homologação das DLLs - 4.49 [Data prometida 09/03/2026]",
+        "status": "Removida",
+        "isCompleted": false
+      },
+      {
+        "id": "f20493bc-bb51-4392-b892-be6243a5b0af",
+        "name": "FAT33999",
+        "type": "Merge",
+        "points": 3,
+        "observation": "[NFS-e] A tag TipoRetencaoPisCofins está ficando com o valor 1, porém o cliente precisa que saia com",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "fa30169d-378c-47fc-962c-3ad364a2d6d1",
+        "name": "FAT34000",
+        "type": "Legislação",
+        "points": 8,
+        "observation": "[NFS-e] Alíquota de retenção para PIS/COFINS/CSLL conforme NT 007 para NFSe",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "87e4a690-ff38-4655-8976-01390a237c01",
+        "name": "INTPDVALT3694",
+        "type": "Dívida Técnica",
+        "points": 0,
+        "observation": "[PDV Alterdata] Migrar as bpls de plugins do PDV Alterdata para delphi Alexandria",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "64de8de8-6677-4112-bb07-3494201a0261",
+        "name": "INTPDVALT3789",
+        "type": "Legislação",
+        "points": 3,
+        "observation": "0183315453 - Não calcular IBS para Zona Franca de Manaus, exceto alguns NCMs.",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "996f5eab-34bc-4fd9-88b3-b7cbc7354e56",
+        "name": "SISGER23726",
+        "type": "Legislação",
+        "points": 0,
+        "observation": "[Análise] NT 2025.001 V1.00 - Nota Técnica Conjunta CNPJ Alfanumérico (Testes 06/04/2026 Produção 06",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "ab9f0f59-918d-4ced-b0a8-48bb571c8ec6",
+        "name": "FAT34156",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Erro identificado pela qualidade e priorizado pela PO.",
+        "status": "Incluída",
+        "isCompleted": true
+      }
+    ]
+  },
+  {
+    "id": "a29db8b8-8b9a-4360-98ea-e4d983409507",
+    "name": "02/2026 - Faturamento",
+    "team": "Faturamento",
+    "semester": "1° Semestre",
+    "startDate": "2026-02-02",
+    "endDate": "2026-02-20",
+    "manualPlannedPoints": 118,
+    "totalCollaborators": 13,
+    "workingDays": 12,
+    "sprintObservation": "3 Dias de carnaval",
+    "tasks": [
+      {
+        "id": "55459842-9b24-4bf2-aa7f-075ad8e99987",
+        "name": "FAT30340",
+        "type": "Novo Recurso",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento, Roadmap_trimestre, roadmap_mari.dsn.erp",
+        "status": "Não entregue",
+        "isCompleted": false
+      },
+      {
+        "id": "910b6da2-9ec4-44f9-9f21-737bf1b6981f",
+        "name": "FAT31251",
+        "type": "Legislação",
+        "points": 13,
+        "observation": "Backlog_Produto_Faturamento, Reforma Tributaria - Faturamento, Reforma_Faturamento_Estoque",
+        "status": "Não entregue",
+        "isCompleted": false
+      },
+      {
+        "id": "1b33a64b-d4b7-4357-94a4-bdcb48e411d0",
+        "name": "FAT32057",
+        "type": "Melhoria",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "244d1c15-a257-4e07-adb6-957459e5e3c8",
+        "name": "FAT32157",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "8532a3f0-376b-41e2-8dc6-e14392d414fd",
+        "name": "FAT32273",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "feded500-945f-40c6-8561-aa442d19455b",
+        "name": "FAT32387",
+        "type": "Legislação",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "a31f446e-3fa5-499f-a7cc-8d6fe01aa14c",
+        "name": "FAT32698",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "dd4a2251-d0eb-4be3-8c9e-01b803163b38",
+        "name": "FAT32921",
+        "type": "Novo Recurso",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "5994001e-63ab-49d5-b694-0cc6064d54ec",
+        "name": "FAT33169",
+        "type": "Melhoria",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "c8d1f9c7-44aa-470a-ad14-e5c1aaf557a4",
+        "name": "FAT33201",
+        "type": "Melhoria",
+        "points": 3,
+        "observation": "Não entregue porque a tarefa de eventos principal não saiu e optamos por não fazer essa.",
+        "status": "Não entregue",
+        "isCompleted": false
+      },
+      {
+        "id": "6daf4911-976e-47a2-981a-be00335b5c63",
+        "name": "FAT33284",
+        "type": "Melhoria",
+        "points": 13,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "163bbbb7-7357-4a45-a126-9962c5d1dddc",
+        "name": "FAT33348",
+        "type": "Legislação",
+        "points": 8,
+        "observation": "Realizado a liberação em Beta, porem na develop não foi possivel testar.",
+        "status": "Não entregue",
+        "isCompleted": false
+      },
+      {
+        "id": "ed99075e-07f0-4369-9e4c-f5bd61e59361",
+        "name": "FAT33350",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "9c391b4e-5b87-445d-a94d-c540f400e132",
+        "name": "FAT33449",
+        "type": "Erro",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "fdeda2a7-9e62-433c-8016-fb1fb2ad451b",
+        "name": "FAT33450",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "f41c6473-72dd-4ef2-bc1d-016384126858",
+        "name": "FAT33496",
+        "type": "Erro",
+        "points": 13,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "922b7f53-a7a0-46e9-8739-51a9e24d89bd",
+        "name": "FAT33513",
+        "type": "Erro",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "1bc15173-3132-473c-a36c-fd3788a0ef86",
+        "name": "FAT33538",
+        "type": "Legislação",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "a264f5e2-5f20-4bb3-990f-fdb4c74a04ec",
+        "name": "SISGER23726",
+        "type": "Legislação",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "76b2231a-f835-40af-9414-b159e6cb02be",
+        "name": "FAT33743",
+        "type": "Erro",
+        "points": 0,
+        "observation": "Acrescentada - Erro interno evento",
+        "status": "Incluída",
+        "isCompleted": true
+      }
+    ]
+  },
+  {
+    "id": "b571ee09-e84e-4dec-b102-9acbd9ccf9cf",
+    "name": "01/2026 - Faturamento",
+    "team": "Faturamento",
+    "semester": "1° Semestre",
+    "startDate": "2026-01-02",
+    "endDate": "2026-01-23",
+    "manualPlannedPoints": 101,
+    "totalCollaborators": 13,
+    "workingDays": 16,
+    "sprintObservation": "NEsta sprint devido a reforma a maioria das tarefas foram inclusas a longo da sprint.",
+    "tasks": [
+      {
+        "id": "bb41e2b2-a873-4cf2-af9a-3404dfca002c",
+        "name": "FAT30574",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint, Reforma Tributaria - Faturamento",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "58b41caa-7022-46e5-80f8-d2c5b60ca1ad",
+        "name": "FAT30924",
+        "type": "Melhoria",
+        "points": 1,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "5977580b-9a22-4905-8c00-4e3e3c56ced3",
+        "name": "FAT31608",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "2f73f41e-cd44-415b-8952-8fda7de85e78",
+        "name": "FAT32163",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "0b127ac0-1378-4ee9-aa2c-25557104fbc2",
+        "name": "FAT32230",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "64a15774-07d3-43a1-a769-051fcde770a5",
+        "name": "FAT32392",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "6297cea4-6ee2-46a0-bf7c-8d1ab864b58e",
+        "name": "FAT32541",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "76f09215-5f06-469e-ab95-a28363b5d7a8",
+        "name": "FAT32554",
+        "type": "Legislação",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "c0cb3b2b-9844-4bf8-b314-7684e48621aa",
+        "name": "FAT32638",
+        "type": "Legislação",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "ce2122fb-4612-402b-99d6-09515156be4d",
+        "name": "FAT32691",
+        "type": "Legislação",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "8736c0ad-f9ab-4564-80fe-7031916d58cf",
+        "name": "FAT32742",
+        "type": "Erro",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "2e9f9e59-a0f8-43c8-b214-fef884e070ea",
+        "name": "FAT32948",
+        "type": "Legislação",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "ac060346-65d4-42a0-b963-7d76f5152726",
+        "name": "FAT33000",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "f7151f1d-1753-41e3-a558-ab67df366e52",
+        "name": "FAT33008",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "13b985c1-b833-4acd-8289-28dc20ab4815",
+        "name": "FAT33011",
+        "type": "Melhoria",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "fb455179-68cc-4f5b-80c8-f5a52e55e183",
+        "name": "FAT33039",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "ffe0818b-9b48-4094-b666-722fbde565ac",
+        "name": "FAT33049",
+        "type": "Proteção",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "db54539b-263f-49fe-8585-194d8c3a0c43",
+        "name": "FAT33058",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "e333331a-a324-469c-a14b-3ae51114667c",
+        "name": "FAT33079",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "dc1843be-1b04-49c8-be96-4e45ff64025d",
+        "name": "FAT33082",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "3e7bd7e7-61be-440d-951e-801536442bfc",
+        "name": "FAT33088",
+        "type": "Erro",
+        "points": 1,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "a8e11624-1091-415c-a9f5-91e3b43ffb4a",
+        "name": "FAT33095",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "aea72a9f-04ea-4676-95ca-5888cd9b423f",
+        "name": "FAT33099",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "67a7c067-b14d-478e-8d3b-82cd88c3a9e0",
+        "name": "FAT33129",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "f986c608-1ae4-4dd9-b0eb-f9d5f856534a",
+        "name": "FAT33130",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "04a37bd6-6733-48d9-8583-e44165d272ed",
+        "name": "FAT33133",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "6a8da14e-90fd-4e45-ad1e-eecf47fd6f48",
+        "name": "FAT33136",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "af3e9220-38e6-448d-94db-993e5b82f0c7",
+        "name": "FAT33137",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "7fda577d-452b-443b-aefa-b2b77a4a0929",
+        "name": "FAT33146",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "7389a84a-65e0-4e27-8843-d42680f0fac1",
+        "name": "FAT33156",
+        "type": "Proteção",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "0d861d56-9ff5-4f23-add1-387ad6415b0d",
+        "name": "FAT33161",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "979a98ef-4dcd-4de3-9a5e-28d6333a6f97",
+        "name": "FAT33163",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "685e5d6f-d5e9-4c43-8110-0e5619f9dac9",
+        "name": "FAT33164",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "8cc3856a-631f-46a5-b681-ddf0ecd2d7bd",
+        "name": "FAT33166",
+        "type": "Automação",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "2bdf85de-d685-47c6-8d85-514199c254a0",
+        "name": "FAT33182",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "fd47c82f-17a0-4647-a029-2720c4ab69ff",
+        "name": "FAT33186",
+        "type": "Erro",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "033c86c3-68bd-438f-a837-3b2ccdd529f8",
+        "name": "FAT33191",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "89001b20-677f-4189-bb9e-463f7924d611",
+        "name": "FAT33196",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "4a86778c-f485-4e0c-ada5-7e69f376d5c4",
+        "name": "FAT33216",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "4ec72d0c-f5de-4670-b40e-5731a46b937e",
+        "name": "FAT33219",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "0f3a55db-02c0-4846-ad38-05aa664f48df",
+        "name": "FAT33226",
+        "type": "Merge",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "224e8c7d-42a0-422d-b4f6-5e67a7814b27",
+        "name": "FAT33229",
+        "type": "Merge",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "477523d7-4496-4a39-a2c9-338f1baff17a",
+        "name": "FAT33235",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "c9c295d2-8b2c-4587-9380-4ba5941bcab5",
+        "name": "FAT33249",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "bafb8caa-07e4-4ebe-a9a9-bd67daf8ba22",
+        "name": "FAT33250",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "151e8fe7-5392-49b2-b85f-5ed75df7a7af",
+        "name": "FAT33292",
+        "type": "Erro",
+        "points": 1,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "ca950bae-1f6b-458c-8ba2-98105629cce6",
+        "name": "FAT33306",
+        "type": "Proteção",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "47a935c3-f9a5-4645-935c-ee9490c20f86",
+        "name": "FAT33323",
+        "type": "Merge",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "a1d685b3-b9e1-43ed-8808-630aadbe8e59",
+        "name": "FAT33324",
+        "type": "Merge",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "7ccae3bb-2a88-4042-aac7-a59525509ab1",
+        "name": "FAT33325",
+        "type": "Merge",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "42fe2738-2d69-4c90-b3ea-e5b00ffa2af2",
+        "name": "FAT33326",
+        "type": "Merge",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "7ada8186-6ede-4c83-9cf2-5c1b960657bb",
+        "name": "FAT33327",
+        "type": "Merge",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "16bb1e0e-c479-4611-8b6d-3a36fa15fc6c",
+        "name": "FAT33328",
+        "type": "Merge",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "43579c2a-0f7c-492d-874d-06002dfe5ac5",
+        "name": "FAT33353",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "bc52ba51-e15d-4217-9edd-46d24e2b0d41",
+        "name": "FAT33446",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "8fd73476-77d4-44b5-b652-8478c06c5417",
+        "name": "INTPDVALT3764",
+        "type": "Erro",
+        "points": 1,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "970e0b45-94ff-4c3a-bc85-ee8b300f6894",
+        "name": "SISGER25373",
+        "type": "Erro",
+        "points": 1,
+        "observation": "Backlog_Produto_Faturamento, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "b5037d45-d001-4d71-9b5b-7baac9b8e5e0",
+        "name": "SISGER25573",
+        "type": "Erro",
+        "points": 1,
+        "observation": "Backlog_Produto_Faturamento",
+        "status": "Planejada",
+        "isCompleted": true
+      }
+    ]
+  },
+  {
+    "id": "65beaa84-15be-42a0-a06a-c03bb28b74f8",
+    "name": "04/2025 - Faturamento",
+    "team": "Faturamento",
+    "semester": "1° Semestre",
+    "startDate": "2026-03-30",
+    "endDate": "2026-04-18",
+    "manualPlannedPoints": 0,
+    "totalCollaborators": 0,
+    "workingDays": 15,
+    "sprintObservation": "",
+    "tasks": []
+  },
+  {
+    "id": "ff2703a5-299b-42a8-83c5-9057e34c5f08",
+    "name": "01/2026 - Time Web",
+    "team": "Time Web",
+    "semester": "1° Semestre",
+    "startDate": "2026-01-02",
+    "endDate": "2026-01-23",
+    "manualPlannedPoints": 110,
+    "totalCollaborators": 9.5,
+    "workingDays": 17,
+    "sprintObservation": "",
+    "tasks": [
+      {
+        "id": "e4544e47-4137-4443-92f1-0f088c48ed97",
+        "name": "BAPI1030",
+        "type": "Melhoria",
+        "points": 8,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "eb16a25d-79ce-4444-951e-df2da10f96a5",
+        "name": "BAPI1157",
+        "type": "Legislação",
+        "points": 3,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "3c5be3bb-8ec9-4786-8b1b-1f0f985fa1c9",
+        "name": "BAPI692",
+        "type": "Erro",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "d9ecde9c-ad0a-4459-920e-4b7862aeca6f",
+        "name": "BIMUP830",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "b86a7112-92c0-42e7-9084-6dffd7beb5aa",
+        "name": "BIMUP864",
+        "type": "Erro",
+        "points": 8,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "0c2fe7c4-7c47-4471-a54d-dad83c2d6799",
+        "name": "ESTWEB447",
+        "type": "Novo Recurso",
+        "points": 3,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "cb8fef36-979d-43e9-86c2-316cbd49dc95",
+        "name": "ESTWEB642",
+        "type": "Melhoria",
+        "points": 8,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "d15fb84d-2645-4fad-bf13-eb7bbc71bb18",
+        "name": "ESTWEB644",
+        "type": "Novo Recurso",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "0896e084-76ca-41e0-9ca6-7fa72528d82b",
+        "name": "ESTWEB645",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "cd85e3ff-0720-4ff6-885a-a3d0e1eba514",
+        "name": "ESTWEB720",
+        "type": "Melhoria",
+        "points": 13,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "05d41f3a-2c43-4560-8cf5-0833bb30d336",
+        "name": "ESTWEB728",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "d0a47e39-584d-4c68-b332-f2393174d3a0",
+        "name": "ESTWEB743",
+        "type": "Usabilidade",
+        "points": 8,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "6f8c598c-e665-448d-aed6-a63bd6d08256",
+        "name": "ESTWEB790",
+        "type": "Erro",
+        "points": 3,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "719d8e65-9aea-4b33-a335-e56bc0d5cbe2",
+        "name": "ESTWEB803",
+        "type": "Erro",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "2f574b28-5b3e-4fbb-9bef-6c209f5cb8f8",
+        "name": "FATWEB1098",
+        "type": "Legislação",
+        "points": 8,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "bef27371-5bfb-47b5-9a2a-b5454475ba38",
+        "name": "FATWEB1099",
+        "type": "Legislação",
+        "points": 8,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "347bc13c-ae37-4844-a711-84d5750e2b6e",
+        "name": "FATWEB1170",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "53c9dcf5-d37e-4260-9e69-af509ff51eaf",
+        "name": "FATWEB1171",
+        "type": "Legislação",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "4c69ca5a-708d-475c-94e9-de184f94edcb",
+        "name": "FATWEB1282",
+        "type": "Erro",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "b4d65ad5-79b5-4d32-b4b5-35c2884bc179",
+        "name": "FATWEB1294",
+        "type": "Erro",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "9222e784-a32a-4834-b6c9-1aad0b4855a0",
+        "name": "FATWEB1308",
+        "type": "Erro",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "9cf99f47-aa42-49f1-a58e-c5ebb8b84f4d",
+        "name": "FATWEB1309",
+        "type": "Erro",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "7dd7161d-b029-494e-87c8-5e68af52d623",
+        "name": "FATWEB1310",
+        "type": "Erro",
+        "points": 3,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "981906ca-172f-4038-8f9c-2a4d0fcded61",
+        "name": "FATWEB1311",
+        "type": "Erro",
+        "points": 5,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "6791057b-1f56-405a-8faa-e9a72a82c51a",
+        "name": "FATWEB1373",
+        "type": "Erro",
+        "points": 0,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "34e5539a-c00f-4bb8-a9fc-e1e3e5aed26f",
+        "name": "SISGER25592",
+        "type": "Melhoria",
+        "points": 3,
+        "observation": "",
+        "status": "Planejada",
+        "isCompleted": true
+      }
+    ]
+  },
+  {
+    "id": "10419d1d-574b-42f3-aa28-481d37128e0e",
+    "name": "02/2026 - Time Web",
+    "team": "Time Web",
+    "semester": "1° Semestre",
+    "startDate": "2026-02-02",
+    "endDate": "2026-02-20",
+    "manualPlannedPoints": 93,
+    "totalCollaborators": 8.5,
+    "workingDays": 12,
+    "sprintObservation": "3 Dias de carnaval",
+    "tasks": [
+      {
+        "id": "a20e09c5-72cb-4461-9f11-4ad1b2d10efa",
+        "name": "BAPI1006",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "47d5479b-fb90-4dfa-af11-d765210bd227",
+        "name": "BAPI1145",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "9d9965f1-ddb3-45c0-ae9c-7e6c300f175d",
+        "name": "BAPI1165",
+        "type": "Melhoria",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "e7b6032a-cc50-4ef0-9376-4854917c1d7f",
+        "name": "BAPI1199",
+        "type": "Dívida Técnica",
+        "points": 13,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "6cc262e6-fdd3-4b3c-8568-89929a5c3b56",
+        "name": "BAPI988",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "69b15f51-7b5b-4891-942f-d291f1935ef4",
+        "name": "BCON1",
+        "type": "Novo Recurso",
+        "points": 13,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "4386af95-0460-4cad-8b7d-f96771689db1",
+        "name": "BCON7",
+        "type": "Melhoria",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento_Web, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "b6951ccd-e445-40c0-8946-81a8031b7c98",
+        "name": "BIMUP873",
+        "type": "Melhoria",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "a928faf6-e9a0-4079-bc37-14971f54a576",
+        "name": "BIMUP881",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "2190167e-361f-44e8-acba-e693972ab9e4",
+        "name": "ESTWEB749",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "e88d4e99-4f6f-41c8-9246-c0f4ba994bd0",
+        "name": "ESTWEB756",
+        "type": "Novo Recurso",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "fe158415-ebf9-4cf5-94d6-50bb945a7041",
+        "name": "ESTWEB757",
+        "type": "Novo Recurso",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "e7958a00-04a2-4d52-9ff1-98196a15197d",
+        "name": "ESTWEB817",
+        "type": "Erro",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "2be62c84-845b-4f4a-a067-e1eb64f4c746",
+        "name": "FATWEB1258",
+        "type": "Automação",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "1a850cd4-0935-4e8f-86bc-d9b6a53fb4a3",
+        "name": "FATWEB1329",
+        "type": "Novo Recurso",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "600167b3-1165-4a26-9def-fcc1afab7241",
+        "name": "FATWEB1387",
+        "type": "Dívida Técnica",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "24804603-c188-47ef-b2ae-0999665d8bb1",
+        "name": "FATWEB1391",
+        "type": "Proteção",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "c6f05fef-93fb-4e01-83b8-c15884bb8212",
+        "name": "FATWEB1404",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "5aa58ab8-25d6-4923-986b-ce1e5c72cff3",
+        "name": "ME6",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "474468ea-7be7-462a-83f6-1eca85973e73",
+        "name": "ME9",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "b22d01d4-3b98-4ee8-af3f-eff8e3db06c6",
+        "name": "BAPI1216",
+        "type": "Erro",
+        "points": 0,
+        "observation": "Backlog_Produto_Faturamento_Web, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      }
+    ]
+  },
+  {
+    "id": "d5358120-b4dc-4b6b-a39f-8b3abc513cde",
+    "name": "03/2026 - Time Web",
+    "team": "Time Web",
+    "semester": "1° Semestre",
+    "startDate": "2026-03-02",
+    "endDate": "2026-03-21",
+    "manualPlannedPoints": 142,
+    "totalCollaborators": 0,
+    "workingDays": 15,
+    "sprintObservation": "",
+    "tasks": [
+      {
+        "id": "951e757b-c81e-4f12-9dad-d40328da455a",
+        "name": "BAPI1179",
+        "type": "Melhoria",
+        "points": 13,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "b71be4fb-97e6-483a-a6ce-d01e059c336f",
+        "name": "BAPI1282",
+        "type": "Dívida Técnica",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "5d150d15-c3fd-401b-bb8c-2721ef98cabb",
+        "name": "BAPI1296",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "3c8a3934-b3ed-4c36-a582-e415080a550f",
+        "name": "BCON1",
+        "type": "Novo Recurso",
+        "points": 13,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "0cdc17bb-6e1f-47f2-b785-6cef27b24df9",
+        "name": "ESTWEB446",
+        "type": "Novo Recurso",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "200ae0d5-cd0b-4377-97ef-0ed1c4e08045",
+        "name": "ESTWEB450",
+        "type": "Novo Recurso",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "2f78d826-ecd4-4aeb-aba6-05647daca5bd",
+        "name": "ESTWEB451",
+        "type": "Novo Recurso",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "89311e0c-c3f7-4dba-82c1-837ccf42f43b",
+        "name": "ESTWEB641",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "21466ffb-0c6b-49f2-92cb-eeeb55d53059",
+        "name": "ESTWEB656",
+        "type": "Melhoria",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "1cbdc7af-ece6-48f0-8b3f-85858e39164e",
+        "name": "ESTWEB851",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "2ddf0ca8-c82a-4585-9a68-f02aa50b28f0",
+        "name": "ESTWEB857",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "192574e3-68cd-47fe-8834-6ac14621bc8a",
+        "name": "ESTWEB863",
+        "type": "Novo Recurso",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "71d69a96-20f9-44bf-b5d8-d4fbef110fc5",
+        "name": "ESTWEB864",
+        "type": "Melhoria",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "05c4d2da-e9c6-4fc7-adfa-71a073c00915",
+        "name": "ESTWEB877",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "cf1fa8a1-7b74-4d53-a810-49dbed14e1a8",
+        "name": "ESTWEB897",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "b3cbff60-8df7-426b-900e-30c0dbb8db0d",
+        "name": "ESTWEB900",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "cba12db6-52be-4b2a-af27-7e06d1f0434d",
+        "name": "ESTWEB901",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "3a732443-96ff-4c22-9eca-db039764db3a",
+        "name": "FATWEB1259",
+        "type": "Novo Recurso",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "9d34109f-3a5c-4951-bb3f-bbbdaa9db449",
+        "name": "FATWEB1269",
+        "type": "Novo Recurso",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "fca5607d-98ef-4b02-beac-0408d98fd130",
+        "name": "FATWEB1270",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "5fe81b32-385b-4064-a2e0-3a03ce60a7b3",
+        "name": "FATWEB1273",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "b4b66c43-5c7e-4ad1-9bff-034e2d1bcb4b",
+        "name": "FATWEB1275",
+        "type": "Melhoria",
+        "points": 8,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "ff211904-20f8-453e-8788-8f4a54fe4e9d",
+        "name": "FATWEB1276",
+        "type": "Melhoria",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "ceb15822-4f5a-4612-aed2-4400d9120b4c",
+        "name": "FATWEB1399",
+        "type": "Erro",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "27e490d4-92f8-45ef-80d1-a963df0c31f7",
+        "name": "FATWEB1451",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "750045a6-60f5-43b0-b06f-c691b5520cea",
+        "name": "FATWEB1476",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "0b96dde9-3f85-4847-92f3-3b8f77171191",
+        "name": "FATWEB1483",
+        "type": "Merge",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "1e8eb721-3521-4827-85f5-2290f6d3243d",
+        "name": "FATWEB1526",
+        "type": "Erro",
+        "points": 3,
+        "observation": "Backlog_Produto_Faturamento_Web, Acrescentado na Sprint",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "1cd6f20a-d28f-49b1-9e97-b08ed43e5aa4",
+        "name": "FATWEB32",
+        "type": "Novo Recurso",
+        "points": 13,
+        "observation": "Backlog_Produto_Faturamento_Web",
+        "status": "Planejada",
+        "isCompleted": true
+      },
+      {
+        "id": "80894786-b3cd-4e0f-8121-796b649356c7",
+        "name": "FATWEB1515",
+        "type": "Dívida Técnica",
+        "points": 5,
+        "observation": "",
+        "status": "Incluída",
+        "isCompleted": true
+      },
+      {
+        "id": "927eed9b-0a8a-48fa-bee4-1b2afe0a22a9",
+        "name": "FATWEB1497",
+        "type": "Melhoria",
+        "points": 5,
+        "observation": "",
+        "status": "Incluída",
+        "isCompleted": true
+      }
+    ]
+  },
+  {
+    "id": "20adfe8b-2314-4c2f-a2cb-b015a470f291",
+    "name": "04/2025 - Time Web",
+    "team": "Time Web",
+    "semester": "1° Semestre",
+    "startDate": "2026-03-30",
+    "endDate": "2026-04-18",
+    "manualPlannedPoints": 0,
+    "totalCollaborators": 0,
+    "workingDays": 15,
+    "sprintObservation": "",
+    "tasks": []
+  }
+]
