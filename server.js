@@ -9,10 +9,11 @@ const { DatabaseSync } = require('node:sqlite');
 const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 4173);
 const PUBLIC_DIR = process.cwd();
-const DB_PATH = path.join(PUBLIC_DIR, 'app.db');
+const DB_PATH = process.env.DB_PATH || path.join(PUBLIC_DIR, 'app.db');
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24; // 24h
 const RESET_TTL_MS = 1000 * 60 * 30; // 30min
 
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 const db = new DatabaseSync(DB_PATH);
 db.exec('PRAGMA foreign_keys = ON;');
 db.exec(`
@@ -420,4 +421,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`Servidor iniciado em http://${HOST}:${PORT}`);
+  console.log(`SQLite em: ${DB_PATH}`);
 });
