@@ -233,6 +233,16 @@ body.dark-mode .dropdown-item:hover {
     overflow-y: auto;
 }
 
+.auth-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.auth-box {
+    border-top: 4px solid var(--custom-primary);
+}
+
 @media print {
     html, body {
         background-color: #fff !important; 

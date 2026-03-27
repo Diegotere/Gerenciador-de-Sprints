@@ -73,6 +73,7 @@ const semesterFilterSelect = document.getElementById('semesterFilter');
 const exportDataJsonBtn = document.getElementById('exportDataJsonBtn');
 const importDataBtnTrigger = document.getElementById('importDataBtnTrigger');
 const importFileEl = document.getElementById('importFile');
+const logoutBtn = document.getElementById('logoutBtn');
 const appNotificationEl = document.getElementById('appNotification');
 const notificationBodyEl = document.getElementById('notificationBody');
 const closeNotificationBtn = document.getElementById('closeNotificationBtn');
@@ -118,14 +119,43 @@ function applyTheme(theme) {
 }
 
 function getStoredTheme() {
-  const stored = localStorage.getItem('app_theme_v1');
-  return stored === 'dark' ? 'dark' : 'light';
+  return document.body.classList.contains('dark-mode') ? 'dark' : 'light';
 }
 
 function toggleTheme() {
   const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
-  localStorage.setItem('app_theme_v1', nextTheme);
   applyTheme(nextTheme);
+}
+
+async function apiRequest(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    ...options
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.message || 'Erro na comunicação com servidor.');
+  return payload;
+}
+
+async function ensureAuthenticatedSession() {
+  try {
+    await apiRequest('/api/auth/session', { method: 'GET' });
+    return true;
+  } catch {
+    window.location.href = '/login.html';
+    return false;
+  }
+}
+
+async function handleLogout() {
+  try {
+    await apiRequest('/api/auth/logout', { method: 'POST' });
+  } catch {
+    // noop
+  } finally {
+    window.location.href = '/login.html';
+  }
 }
 
 function openModal(el) { if (el) { el.classList.add('is-active'); document.documentElement.classList.add('is-clipped'); } }
@@ -139,15 +169,21 @@ function normalizeImportedSprintData(rawSprint) {
   return normalizedSprint;
 }
 
-function loadSprints() {
+async function loadSprints() {
   try {
-    const data = JSON.parse(localStorage.getItem('sprints_data_v1') || '[]');
-    sprints = Array.isArray(data) ? data.map(normalizeImportedSprintData) : [];
-  } catch {
+    const data = await apiRequest('/api/sprints', { method: 'GET' });
+    sprints = Array.isArray(data?.sprints) ? data.sprints.map(normalizeImportedSprintData) : [];
+  } catch (error) {
     sprints = [];
+    showAppNotification(`Erro ao carregar sprints: ${error.message}`, 'is-danger');
   }
 }
-function saveSprints() { localStorage.setItem('sprints_data_v1', JSON.stringify(sprints)); }
+async function saveSprints() {
+  await apiRequest('/api/sprints/bulk', {
+    method: 'PUT',
+    body: JSON.stringify({ sprints })
+  });
+}
 
 function calculateWorkingDaysBetweenDates(startDateStr, endDateStr) {
   if (!startDateStr || !endDateStr) return 0;
@@ -538,15 +574,19 @@ function handleEditSprintRequest(e) {
   openModal(sprintModalEl);
 }
 
-function handleDuplicateSprintRequest(e) {
+async function handleDuplicateSprintRequest(e) {
   const sprintId = e.currentTarget.dataset.sprintId;
   const sprint = sprints.find(s => s.id === sprintId);
   if (!sprint) return;
   const duplicatedSprint = duplicateSprintData(sprint);
   sprints.push(duplicatedSprint);
-  saveSprints();
-  renderSprints();
-  showAppNotification('Sprint duplicada com sucesso!', 'is-success');
+  try {
+    await saveSprints();
+    renderSprints();
+    showAppNotification('Sprint duplicada com sucesso!', 'is-success');
+  } catch (error) {
+    showAppNotification(`Erro ao duplicar sprint: ${error.message}`, 'is-danger');
+  }
 }
 
 function handleExportSprintExcelRequest(e) {
@@ -849,9 +889,12 @@ function handleImportData(event) {
       if (!Array.isArray(importedData)) throw new Error('JSON inválido');
       if (confirm('Tem certeza que deseja substituir todos os dados atuais?')) {
         sprints = importedData.map(normalizeImportedSprintData);
-        saveSprints();
-        renderSprints();
-        showAppNotification('Dados importados com sucesso!', 'is-success');
+        saveSprints().then(() => {
+          renderSprints();
+          showAppNotification('Dados importados com sucesso!', 'is-success');
+        }).catch((error) => {
+          showAppNotification(`Erro ao salvar dados importados: ${error.message}`, 'is-danger');
+        });
       }
     } catch (error) {
       showAppNotification(`Erro ao processar JSON: ${error.message}`, 'is-danger');
@@ -920,7 +963,7 @@ function updateWorkingDaysField() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const duplicateThemeToggles = document.querySelectorAll('#darkModeToggleBtn');
   if (duplicateThemeToggles.length > 1) {
     duplicateThemeToggles.forEach((button, index) => {
@@ -928,8 +971,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const isAuthenticated = await ensureAuthenticatedSession();
+  if (!isAuthenticated) return;
+
   applyTheme(getStoredTheme());
-  loadSprints();
+  await loadSprints();
   populateTaskFormElements();
   renderSprints();
 
@@ -963,6 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
   exportDataJsonBtn?.addEventListener('click', exportDataToJson);
   importDataBtnTrigger?.addEventListener('click', () => importFileEl.click());
   importFileEl?.addEventListener('change', handleImportData);
+  logoutBtn?.addEventListener('click', handleLogout);
   triggerImportTasksFileBtn?.addEventListener('click', () => importTasksFileEl.click());
   importTasksFileEl?.addEventListener('change', handleImportTasksFromFile);
   sprintStartDateInput?.addEventListener('change', updateWorkingDaysField);
@@ -988,7 +1035,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   cancelTaskEditBtn?.addEventListener('click', resetTaskForm);
 
-  sprintForm?.addEventListener('submit', (e) => {
+  sprintForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const sprintData = {
       id: sprintIdInput.value || crypto.randomUUID(),
@@ -1006,26 +1053,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!sprintData.name || !sprintData.team || !sprintData.semester || !sprintData.startDate || !sprintData.endDate) return showAppNotification('Preencha nome, time, semestre e datas da sprint.', 'is-danger');
     if (new Date(sprintData.startDate) > new Date(sprintData.endDate)) return showAppNotification('A data inicial não pode ser posterior à final.', 'is-danger');
 
-    if (currentEditingSprintId) {
-      const i = sprints.findIndex(s => s.id === currentEditingSprintId);
-      if (i !== -1) sprints[i] = sprintData;
-      showAppNotification('Sprint atualizada com sucesso!', 'is-success');
-    } else {
-      sprints.push(sprintData);
-      showAppNotification('Sprint adicionada com sucesso!', 'is-success');
-    }
+    try {
+      if (currentEditingSprintId) {
+        const i = sprints.findIndex(s => s.id === currentEditingSprintId);
+        if (i !== -1) sprints[i] = sprintData;
+        showAppNotification('Sprint atualizada com sucesso!', 'is-success');
+      } else {
+        sprints.push(sprintData);
+        showAppNotification('Sprint adicionada com sucesso!', 'is-success');
+      }
 
-    saveSprints();
-    renderSprints();
-    closeModal(sprintModalEl);
+      await saveSprints();
+      renderSprints();
+      closeModal(sprintModalEl);
+    } catch (error) {
+      showAppNotification(`Erro ao salvar sprint: ${error.message}`, 'is-danger');
+    }
   });
 
-  confirmDeleteBtn?.addEventListener('click', () => {
+  confirmDeleteBtn?.addEventListener('click', async () => {
     if (sprintToDeleteId) {
-      sprints = sprints.filter(s => s.id !== sprintToDeleteId);
-      saveSprints();
-      renderSprints();
-      showAppNotification('Sprint excluída com sucesso.', 'is-success');
+      try {
+        sprints = sprints.filter(s => s.id !== sprintToDeleteId);
+        await saveSprints();
+        renderSprints();
+        showAppNotification('Sprint excluída com sucesso.', 'is-success');
+      } catch (error) {
+        showAppNotification(`Erro ao excluir sprint: ${error.message}`, 'is-danger');
+      }
     }
     sprintToDeleteId = null;
     closeModal(deleteConfirmModalEl);

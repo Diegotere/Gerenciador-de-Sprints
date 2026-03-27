@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Gerenciador de Sprints</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="has-background-light">
+  <section class="section auth-section">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-11-mobile is-8-tablet is-6-desktop is-5-widescreen">
+          <div class="box auth-box">
+            <h1 class="title is-4 has-text-centered has-text-primary">Gerenciador de Sprints</h1>
+            <p class="subtitle is-6 has-text-centered">Acesse sua conta para visualizar suas sprints.</p>
+
+            <div class="tabs is-toggle is-fullwidth mb-4">
+              <ul>
+                <li class="is-active" data-auth-tab="login"><a>Entrar</a></li>
+                <li data-auth-tab="register"><a>Cadastrar</a></li>
+                <li data-auth-tab="forgot"><a>Recuperar Senha</a></li>
+              </ul>
+            </div>
+
+            <div id="authNotification" class="notification is-hidden"></div>
+
+            <form id="loginForm" data-auth-panel="login">
+              <div class="field">
+                <label class="label" for="loginEmail">E-mail</label>
+                <div class="control has-icons-left">
+                  <input class="input" type="email" id="loginEmail" required placeholder="seu@email.com">
+                  <span class="icon is-small is-left"><i class="bi bi-envelope"></i></span>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" for="loginPassword">Senha</label>
+                <div class="control has-icons-left">
+                  <input class="input" type="password" id="loginPassword" required minlength="6" placeholder="Sua senha">
+                  <span class="icon is-small is-left"><i class="bi bi-lock"></i></span>
+                </div>
+              </div>
+              <button class="button is-primary is-fullwidth" type="submit">Entrar</button>
+            </form>
+
+            <form id="registerForm" class="is-hidden" data-auth-panel="register">
+              <div class="field">
+                <label class="label" for="registerName">Nome</label>
+                <div class="control has-icons-left">
+                  <input class="input" type="text" id="registerName" required placeholder="Seu nome">
+                  <span class="icon is-small is-left"><i class="bi bi-person"></i></span>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" for="registerEmail">E-mail</label>
+                <div class="control has-icons-left">
+                  <input class="input" type="email" id="registerEmail" required placeholder="seu@email.com">
+                  <span class="icon is-small is-left"><i class="bi bi-envelope"></i></span>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" for="registerPassword">Senha</label>
+                <div class="control has-icons-left">
+                  <input class="input" type="password" id="registerPassword" required minlength="6" placeholder="Mínimo 6 caracteres">
+                  <span class="icon is-small is-left"><i class="bi bi-lock"></i></span>
+                </div>
+              </div>
+              <button class="button is-link is-fullwidth" type="submit">Criar conta</button>
+            </form>
+
+            <form id="forgotForm" class="is-hidden" data-auth-panel="forgot">
+              <div class="field">
+                <label class="label" for="forgotEmail">E-mail cadastrado</label>
+                <div class="control has-icons-left">
+                  <input class="input" type="email" id="forgotEmail" required placeholder="seu@email.com">
+                  <span class="icon is-small is-left"><i class="bi bi-envelope"></i></span>
+                </div>
+              </div>
+              <button class="button is-warning is-fullwidth mb-4" type="submit">Gerar token de recuperação</button>
+
+              <div id="resetTokenContainer" class="notification is-light is-hidden"></div>
+              <hr>
+              <div class="field">
+                <label class="label" for="resetToken">Token</label>
+                <div class="control"><input class="input" type="text" id="resetToken" placeholder="Token recebido"></div>
+              </div>
+              <div class="field">
+                <label class="label" for="resetNewPassword">Nova senha</label>
+                <div class="control"><input class="input" type="password" id="resetNewPassword" minlength="6" placeholder="Nova senha"></div>
+              </div>
+              <button class="button is-danger is-fullwidth" type="button" id="resetPasswordBtn">Redefinir senha</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="auth.js" defer></script>
+</body>
+</html>
