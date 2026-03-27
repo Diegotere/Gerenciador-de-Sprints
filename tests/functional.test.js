@@ -66,7 +66,7 @@ function loadApp() {
     }
   };
 
-  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, getSprintsByTeam, calculateSprintProductivityAverage, buildDashboardDatasets, getSprintTasksExportRows, duplicateSprintData, getSprintVisualStatus, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
+  vm.runInNewContext(`${source}\nmodule.exports = { inferSemesterFromDate, normalizeImportedSprintData, getSprintSemester, getFilteredSprints, getSprintsByTeam, isSprintStarted, getStartedSprints, calculateSprintProductivityAverage, buildDashboardDatasets, getSprintTasksExportRows, duplicateSprintData, getSprintVisualStatus, calculateSprintStats, setSprints: (value) => { sprints = value; }, setTeamFilter: (value) => { teamFilterSelect.value = value; }, setSemesterFilter: (value) => { semesterFilterSelect.value = value; } };`, sandbox);
 
   return sandbox.module.exports;
 }
@@ -292,4 +292,21 @@ test('getSprintsByTeam retorna apenas sprints do time selecionado', () => {
   assert.equal(result.length, 2);
   assert.equal(result[0].id, 's1');
   assert.equal(result[1].id, 's3');
+});
+
+test('getStartedSprints considera apenas sprints com data inicial até hoje', () => {
+  const app = loadApp();
+  const referenceDate = new Date('2026-03-27T00:00:00Z');
+  const sprints = [
+    { id: 's1', startDate: '2026-03-01' },
+    { id: 's2', startDate: '2026-03-27' },
+    { id: 's3', startDate: '2026-03-30' },
+    { id: 's4', startDate: '' }
+  ];
+
+  assert.equal(app.isSprintStarted(sprints[0], referenceDate), true);
+  assert.equal(app.isSprintStarted(sprints[1], referenceDate), true);
+  assert.equal(app.isSprintStarted(sprints[2], referenceDate), false);
+  assert.equal(app.isSprintStarted(sprints[3], referenceDate), false);
+  assert.deepEqual(app.getStartedSprints(sprints, referenceDate).map((s) => s.id), ['s1', 's2']);
 });

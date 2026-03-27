@@ -242,6 +242,19 @@ function getSprintsByTeam(teamName) {
   return sprints.filter((sprint) => String(sprint.team || '').trim() === teamName);
 }
 
+function isSprintStarted(sprint, referenceDate = new Date()) {
+  if (!sprint?.startDate) return false;
+  const startDate = new Date(`${sprint.startDate}T00:00:00`);
+  if (Number.isNaN(startDate.getTime())) return false;
+  const today = new Date(referenceDate);
+  today.setHours(0, 0, 0, 0);
+  return startDate <= today;
+}
+
+function getStartedSprints(sprintsList, referenceDate = new Date()) {
+  return (Array.isArray(sprintsList) ? sprintsList : []).filter((sprint) => isSprintStarted(sprint, referenceDate));
+}
+
 function calculateSprintProductivityAverage(sprint) {
   const tasks = Array.isArray(sprint?.tasks) ? sprint.tasks : [];
   const scoredTasks = tasks.filter((task) => Number(task?.points) > 0);
@@ -697,6 +710,7 @@ function handleConsolidatedReport() {
   const currentTeam = document.getElementById('consolidatedTeamFilter')?.value;
   const selectedTeam = teams.includes(currentTeam) ? currentTeam : teams[0];
   const teamSprints = getSprintsByTeam(selectedTeam);
+  const startedTeamSprints = getStartedSprints(teamSprints);
 
   let totalTasksOverall = 0;
   let totalDeliveredPointsOverall = 0;
@@ -723,9 +737,17 @@ function handleConsolidatedReport() {
     });
   });
 
-  const averageTasksPerSprint = teamSprints.length ? (totalTasksOverall / teamSprints.length).toFixed(1) : '0.0';
-  const averagePointsPerSprint = teamSprints.length ? (totalDeliveredPointsOverall / teamSprints.length).toFixed(1) : '0.0';
-  const averagePointsPerTask = totalTasksOverall ? (totalDeliveredPointsOverall / totalTasksOverall).toFixed(1) : '0.0';
+  let totalTasksStarted = 0;
+  let totalDeliveredPointsStarted = 0;
+  startedTeamSprints.forEach((sprint) => {
+    const stats = calculateSprintStats(sprint);
+    totalTasksStarted += (Array.isArray(sprint.tasks) ? sprint.tasks.filter((t) => t.status !== 'Removida').length : 0);
+    totalDeliveredPointsStarted += stats.deliveredPoints || 0;
+  });
+
+  const averageTasksPerSprint = startedTeamSprints.length ? (totalTasksStarted / startedTeamSprints.length).toFixed(1) : '0.0';
+  const averagePointsPerSprint = startedTeamSprints.length ? (totalDeliveredPointsStarted / startedTeamSprints.length).toFixed(1) : '0.0';
+  const averagePointsPerTask = totalTasksStarted ? (totalDeliveredPointsStarted / totalTasksStarted).toFixed(1) : '0.0';
   const averageCompletionRate = totalScopePointsOverall > 0 ? Math.max(0, (totalDeliveredPointsOverall / totalScopePointsOverall) * 100).toFixed(1) : '0.0';
 
   consolidatedReportViewContent.innerHTML = `
@@ -746,7 +768,7 @@ function handleConsolidatedReport() {
         <div class="column is-half-mobile is-one-quarter-tablet"><div class="stat-card avg-completion-rate"><p class="stat-card-title">Taxa Média de Conclusão</p><p class="stat-card-value">${averageCompletionRate}%</p></div></div>
       </div>
 
-      <h3 class="title is-5 has-text-primary mb-3">Médias por Sprint</h3>
+      <h3 class="title is-5 has-text-primary mb-3">Médias por Sprint (somente sprints iniciadas)</h3>
       <div class="columns is-multiline is-mobile mb-5">
         <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-tasks"><p class="stat-card-title">Média de Tarefas por Sprint</p><p class="stat-card-value">${averageTasksPerSprint}</p></div></div>
         <div class="column is-half-mobile is-one-third-tablet"><div class="stat-card avg-points"><p class="stat-card-title">Média de Pontos por Sprint</p><p class="stat-card-value">${averagePointsPerSprint}</p></div></div>
