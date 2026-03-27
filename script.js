@@ -171,10 +171,19 @@ function canAccessDataActions(email) {
   return DATA_ACTIONS_ALLOWED_EMAILS.has(String(email || '').trim().toLowerCase());
 }
 
+function canManageSprints(email) {
+  return canAccessDataActions(email);
+}
+
 function updateDataActionsVisibility() {
   if (!dataActionsDropdown) return;
   const hasAccess = canAccessDataActions(currentSessionUserEmail);
   dataActionsDropdown.classList.toggle('is-hidden', !hasAccess);
+}
+
+function updateWriteAccessVisibility() {
+  const hasWriteAccess = canManageSprints(currentSessionUserEmail);
+  addSprintBtn?.classList.toggle('is-hidden', !hasWriteAccess);
 }
 
 function normalizeImportedSprintData(rawSprint) {
@@ -461,6 +470,7 @@ function renderTasksInSprintForm() {
 }
 
 function openNewSprintModal() {
+  if (!canManageSprints(currentSessionUserEmail)) return showAppNotification('Você tem acesso somente para consulta.', 'is-warning');
   currentEditingSprintId = null;
   sprintModalTitleEl.textContent = 'Nova Sprint';
   sprintForm.reset();
@@ -507,6 +517,7 @@ function renderSprints() {
   }, {});
 
   const teamNames = Object.keys(groupedByTeam).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const hasWriteAccess = canManageSprints(currentSessionUserEmail);
 
   teamNames.forEach((teamName) => {
     const teamWrapper = document.createElement('section');
@@ -522,26 +533,29 @@ function renderSprints() {
 
       const columnDiv = document.createElement('div');
       columnDiv.className = 'column is-half-mobile is-one-third-tablet is-one-quarter-desktop';
+      const cardActionsHtml = hasWriteAccess ? `
+                <span class="dropdown is-hoverable is-right">
+                  <span class="dropdown-trigger">
+                    <button class="button is-small is-primary is-inverted is-outlined" aria-haspopup="true" aria-controls="dropdown-sprint-card" style="border:none;background-color:transparent !important;">
+                      <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
+                    </button>
+                  </span>
+                  <span class="dropdown-menu" role="menu">
+                    <span class="dropdown-content">
+                      <a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a>
+                      <a href="#" class="dropdown-item duplicate-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-files me-2"></i>Duplicar</a>
+                      <a href="#" class="dropdown-item export-sprint-excel-btn" data-sprint-id="${sprint.id}"><i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel</a>
+                      <a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a>
+                    </span>
+                  </span>
+                </span>` : '';
+
       columnDiv.innerHTML = `
-        <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="Editar sprint ${displayIdentifier}">
+        <div class="card h-100 hover-shadow sprint-card-clickable" data-sprint-id="${sprint.id}" role="button" tabindex="0" aria-label="${hasWriteAccess ? 'Editar' : 'Visualizar'} sprint ${displayIdentifier}">
           <header class="card-header" style="background-color: ${visualStatus.headerColor}; box-shadow: none;">
             <p class="card-header-title has-text-white is-justify-content-space-between">
               <span class="is-truncated" title="${displayIdentifier}">${displayIdentifier}</span>
-              <span class="dropdown is-hoverable is-right">
-                <span class="dropdown-trigger">
-                  <button class="button is-small is-primary is-inverted is-outlined" aria-haspopup="true" aria-controls="dropdown-sprint-card" style="border:none;background-color:transparent !important;">
-                    <span class="icon is-small"><i class="bi bi-three-dots-vertical"></i></span>
-                  </button>
-                </span>
-                <span class="dropdown-menu" role="menu">
-                  <span class="dropdown-content">
-                    <a href="#" class="dropdown-item edit-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-pencil-fill me-2"></i>Editar</a>
-                    <a href="#" class="dropdown-item duplicate-sprint-btn" data-sprint-id="${sprint.id}"><i class="bi bi-files me-2"></i>Duplicar</a>
-                    <a href="#" class="dropdown-item export-sprint-excel-btn" data-sprint-id="${sprint.id}"><i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel</a>
-                    <a href="#" class="dropdown-item delete-sprint-btn has-text-danger" data-sprint-id="${sprint.id}"><i class="bi bi-trash3-fill me-2"></i>Excluir</a>
-                  </span>
-                </span>
-              </span>
+              ${cardActionsHtml}
             </p>
           </header>
           <div class="card-content"><div class="content is-small has-text-grey">
@@ -559,12 +573,14 @@ function renderSprints() {
       const card = columnDiv.querySelector('.sprint-card-clickable');
       card.addEventListener('click', (event) => {
         if (event.target.closest('.edit-sprint-btn, .duplicate-sprint-btn, .export-sprint-excel-btn, .delete-sprint-btn, .view-report-btn, .dropdown, button, a')) return;
-        handleEditSprintRequest({ currentTarget: card });
+        if (hasWriteAccess) handleEditSprintRequest({ currentTarget: card });
+        else handleViewReportRequest({ currentTarget: card });
       });
       card.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          handleEditSprintRequest({ currentTarget: card });
+          if (hasWriteAccess) handleEditSprintRequest({ currentTarget: card });
+          else handleViewReportRequest({ currentTarget: card });
         }
       });
 
@@ -582,6 +598,7 @@ function renderSprints() {
 }
 
 function handleEditSprintRequest(e) {
+  if (!canManageSprints(currentSessionUserEmail)) return showAppNotification('Você tem acesso somente para consulta.', 'is-warning');
   const sprintId = e.currentTarget.dataset.sprintId;
   const sprint = sprints.find(s => s.id === sprintId);
   if (!sprint) return;
@@ -604,6 +621,7 @@ function handleEditSprintRequest(e) {
 }
 
 async function handleDuplicateSprintRequest(e) {
+  if (!canManageSprints(currentSessionUserEmail)) return showAppNotification('Você tem acesso somente para consulta.', 'is-warning');
   const sprintId = e.currentTarget.dataset.sprintId;
   const sprint = sprints.find(s => s.id === sprintId);
   if (!sprint) return;
@@ -633,7 +651,11 @@ function handleExportSprintExcelRequest(e) {
   showAppNotification('Sprint exportada para Excel com sucesso!', 'is-success');
 }
 
-function handleDeleteSprintRequest(e) { sprintToDeleteId = e.currentTarget.dataset.sprintId; openModal(deleteConfirmModalEl); }
+function handleDeleteSprintRequest(e) {
+  if (!canManageSprints(currentSessionUserEmail)) return showAppNotification('Você tem acesso somente para consulta.', 'is-warning');
+  sprintToDeleteId = e.currentTarget.dataset.sprintId;
+  openModal(deleteConfirmModalEl);
+}
 
 function getTaskRowClass(task) {
   if (!task) return '';
@@ -1013,6 +1035,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!authenticatedUser) return;
   currentSessionUserEmail = String(authenticatedUser.email || '').trim().toLowerCase();
   updateDataActionsVisibility();
+  updateWriteAccessVisibility();
 
   applyTheme(getStoredTheme());
   await loadSprints();
@@ -1079,6 +1102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   sprintForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!canManageSprints(currentSessionUserEmail)) return showAppNotification('Você tem acesso somente para consulta.', 'is-warning');
     const sprintData = {
       id: sprintIdInput.value || crypto.randomUUID(),
       name: sprintNameInput.value.trim(),
@@ -1114,6 +1138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   confirmDeleteBtn?.addEventListener('click', async () => {
+    if (!canManageSprints(currentSessionUserEmail)) return showAppNotification('Você tem acesso somente para consulta.', 'is-warning');
     if (sprintToDeleteId) {
       try {
         sprints = sprints.filter(s => s.id !== sprintToDeleteId);

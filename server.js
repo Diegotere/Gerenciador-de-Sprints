@@ -12,6 +12,10 @@ const PUBLIC_DIR = process.cwd();
 const DB_PATH = process.env.DB_PATH || path.join(PUBLIC_DIR, 'app.db');
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24; // 24h
 const RESET_TTL_MS = 1000 * 60 * 30; // 30min
+const WRITE_ALLOWED_EMAILS = new Set([
+  'diego.dsn.erp@alterdata.com.br',
+  'diegotere@yahoo.com.br'
+]);
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 const db = new DatabaseSync(DB_PATH);
@@ -170,6 +174,10 @@ function requireAuth(req, res) {
   return user;
 }
 
+function canWriteSprints(user) {
+  return WRITE_ALLOWED_EMAILS.has(String(user?.email || '').trim().toLowerCase());
+}
+
 function toSprintObject(row, tasksBySprintId) {
   return {
     id: row.id,
@@ -186,20 +194,18 @@ function toSprintObject(row, tasksBySprintId) {
   };
 }
 
-function getUserSprints(userId) {
+function getAllSprints() {
   const sprintRows = db.prepare(`
     SELECT id, name, team, semester, start_date, end_date, manual_planned_points, total_collaborators, working_days, sprint_observation
     FROM sprints
-    WHERE user_id = ?
     ORDER BY start_date ASC, created_at ASC
-  `).all(userId);
+  `).all();
 
   const taskRows = db.prepare(`
     SELECT id, sprint_id, name, type, points, observation, status, is_completed
     FROM tasks
-    WHERE sprint_id IN (SELECT id FROM sprints WHERE user_id = ?)
     ORDER BY rowid ASC
-  `).all(userId);
+  `).all();
 
   const tasksBySprintId = new Map();
   taskRows.forEach((task) => {
@@ -219,12 +225,12 @@ function getUserSprints(userId) {
   return sprintRows.map((row) => toSprintObject(row, tasksBySprintId));
 }
 
-function replaceUserSprints(userId, payloadSprints) {
+function replaceAllSprints(writerUserId, payloadSprints) {
   const input = Array.isArray(payloadSprints) ? payloadSprints : [];
   const now = Date.now();
   try {
     db.exec('BEGIN');
-    db.prepare('DELETE FROM sprints WHERE user_id = ?').run(userId);
+    db.exec('DELETE FROM sprints');
     const insertSprint = db.prepare(`
       INSERT INTO sprints (
         id, user_id, name, team, semester, start_date, end_date, manual_planned_points,
@@ -240,7 +246,7 @@ function replaceUserSprints(userId, payloadSprints) {
       const sprintId = String(sprint?.id || randomId());
       insertSprint.run(
         sprintId,
-        userId,
+        writerUserId,
         String(sprint?.name || ''),
         String(sprint?.team || ''),
         String(sprint?.semester || ''),
@@ -398,14 +404,15 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/sprints' && req.method === 'GET') {
       const user = requireAuth(req, res);
       if (!user) return;
-      return sendJson(res, 200, { sprints: getUserSprints(user.id) });
+      return sendJson(res, 200, { sprints: getAllSprints() });
     }
 
     if (pathname === '/api/sprints/bulk' && req.method === 'PUT') {
       const user = requireAuth(req, res);
       if (!user) return;
+      if (!canWriteSprints(user)) return sendJson(res, 403, { message: 'Sem permissão para alterar dados de sprints.' });
       const payload = await readJsonBody(req);
-      replaceUserSprints(user.id, payload?.sprints);
+      replaceAllSprints(user.id, payload?.sprints);
       return sendJson(res, 200, { message: 'Sprints salvas com sucesso.' });
     }
 
