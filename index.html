@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="has-navbar-fixed-top">
+<html lang="pt-BR" data-theme = "light" class="has-navbar-fixed-top">
 <head>
     <link rel="shortcut icon" type="image/x-icon" href="./Prod.png">
     <meta charset="UTF-8">
@@ -14,6 +14,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
+
 </head>
 <body class="has-background-light">
     <nav class="navbar is-primary has-shadow is-fixed-top" role="navigation" aria-label="main navigation">
@@ -40,6 +42,10 @@
                             <button id="consolidatedReportBtn" class="button is-info is-light">
                                 <span class="icon"><i class="bi bi-file-earmark-text-fill"></i></span>
                                 <span id="consolidatedReportBtnText">Resumo das sprints</span>
+                            </button>
+                            <button id="darkModeToggleBtn" class="button is-dark is-light" type="button" aria-label="Alternar tema escuro">
+                                <span class="icon"><i class="bi bi-moon-stars-fill"></i></span>
+                                <span id="darkModeToggleBtnText">Dark Mode</span>
                             </button>
                             <div class="dropdown is-hoverable is-right" id="dataActionsDropdown">
                                 <div class="dropdown-trigger">
@@ -278,5 +284,8 @@
     <div id="appNotification" class="notification is-hidden" style="position: fixed; top: 70px; right: 20px; z-index: 1100; min-width: 300px;"><button class="delete" id="closeNotificationBtn"></button><span id="notificationBody"></span></div>
 
     <script src="script.js" defer></script>
+    <script src="script.js"></script>
+    <script src="./script.js"></script>
+
 </body>
 </html>
