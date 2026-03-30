@@ -26,6 +26,11 @@ const dashboardCalcInfoBtn = document.getElementById('dashboardCalcInfoBtn');
 const dashboardCalcInfoModalEl = document.getElementById('dashboardCalcInfoModal');
 const closeDashboardCalcInfoModalBtn = document.getElementById('closeDashboardCalcInfoModalBtn');
 const closeDashboardCalcInfoModalXBtn = document.getElementById('closeDashboardCalcInfoModalXBtn');
+const consolidatedChartInfoModalEl = document.getElementById('consolidatedChartInfoModal');
+const consolidatedChartInfoModalTitleEl = document.getElementById('consolidatedChartInfoModalTitle');
+const consolidatedChartInfoModalBodyEl = document.getElementById('consolidatedChartInfoModalBody');
+const closeConsolidatedChartInfoModalBtn = document.getElementById('closeConsolidatedChartInfoModalBtn');
+const closeConsolidatedChartInfoModalXBtn = document.getElementById('closeConsolidatedChartInfoModalXBtn');
 const addSprintBtn = document.getElementById('addSprintBtn');
 const mainNavbarMenu = document.getElementById('mainNavbarMenu');
 const navbarBurgerBtn = document.querySelector('.navbar-burger');
@@ -813,16 +818,22 @@ function handleConsolidatedReport() {
         <div class="column is-full-mobile is-one-third-tablet"><div class="stat-card avg-points-per-task"><p class="stat-card-title">Média de Pontos por Tarefa</p><p class="stat-card-value">${averagePointsPerTask}</p></div></div>
       </div>
 
-      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Velocidade (Planejado vs. Entregue)</h4><div style="height: 350px;"><canvas id="sprintVelocityChartCanvas"></canvas></div></div>
-      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Evolução de Pontos Entregues por Sprint</h4><div style="height: 300px;"><canvas id="deliveredPointsEvolutionChart"></canvas></div></div>
-      <div class="box mb-5"><h4 class="title is-6 has-text-primary has-text-centered mb-3">Gráfico de Evolução de Produtividade</h4><div style="height: 300px;"><canvas id="productivityEvolutionChart"></canvas></div></div>
+      <div class="box mb-5"><div class="is-flex is-justify-content-space-between is-align-items-center mb-3"><h4 class="title is-6 has-text-primary has-text-centered mb-0">Gráfico de Velocidade (Planejado vs. Entregue)</h4><button type="button" class="button is-white is-small consolidated-chart-info-btn" data-chart-type="velocity" title="Como calculamos" aria-label="Como calculamos"><span class="icon is-small has-text-grey"><i class="bi bi-question-circle"></i></span></button></div><div style="height: 350px;"><canvas id="sprintVelocityChartCanvas"></canvas></div></div>
+      <div class="box mb-5"><div class="is-flex is-justify-content-space-between is-align-items-center mb-3"><h4 class="title is-6 has-text-primary has-text-centered mb-0">Evolução de Pontos Entregues por Sprint</h4><button type="button" class="button is-white is-small consolidated-chart-info-btn" data-chart-type="delivered_evolution" title="Como calculamos" aria-label="Como calculamos"><span class="icon is-small has-text-grey"><i class="bi bi-question-circle"></i></span></button></div><div style="height: 300px;"><canvas id="deliveredPointsEvolutionChart"></canvas></div></div>
+      <div class="box mb-5"><div class="is-flex is-justify-content-space-between is-align-items-center mb-3"><h4 class="title is-6 has-text-primary has-text-centered mb-0">Gráfico de Evolução de Produtividade</h4><button type="button" class="button is-white is-small consolidated-chart-info-btn" data-chart-type="productivity_evolution" title="Como calculamos" aria-label="Como calculamos"><span class="icon is-small has-text-grey"><i class="bi bi-question-circle"></i></span></button></div><div style="height: 300px;"><canvas id="productivityEvolutionChart"></canvas></div></div>
       <div class="columns">
-        <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Tarefas por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="taskTypePieChartConsolidated"></canvas></div></div></div>
-        <div class="column"><div class="box h-100"><h4 class="title is-6 has-text-primary has-text-centered mb-2">Distribuição de Pontos por Tipo</h4><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="pointsTypePieChartConsolidated"></canvas></div></div></div>
+        <div class="column"><div class="box h-100"><div class="is-flex is-justify-content-space-between is-align-items-center mb-2"><h4 class="title is-6 has-text-primary has-text-centered mb-0">Distribuição de Tarefas por Tipo</h4><button type="button" class="button is-white is-small consolidated-chart-info-btn" data-chart-type="task_type_distribution" title="Como calculamos" aria-label="Como calculamos"><span class="icon is-small has-text-grey"><i class="bi bi-question-circle"></i></span></button></div><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="taskTypePieChartConsolidated"></canvas></div></div></div>
+        <div class="column"><div class="box h-100"><div class="is-flex is-justify-content-space-between is-align-items-center mb-2"><h4 class="title is-6 has-text-primary has-text-centered mb-0">Distribuição de Pontos por Tipo</h4><button type="button" class="button is-white is-small consolidated-chart-info-btn" data-chart-type="points_type_distribution" title="Como calculamos" aria-label="Como calculamos"><span class="icon is-small has-text-grey"><i class="bi bi-question-circle"></i></span></button></div><div style="height: 300px; display: flex; align-items: center; justify-content: center;"><canvas id="pointsTypePieChartConsolidated"></canvas></div></div></div>
       </div>
     </div>`;
 
   document.getElementById('consolidatedTeamFilter')?.addEventListener('change', handleConsolidatedReport);
+  document.querySelectorAll('.consolidated-chart-info-btn').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      openConsolidatedChartInfo(button.dataset.chartType);
+    });
+  });
 
   if (window.Chart) {
     const sorted = [...teamSprints].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
@@ -1023,6 +1034,39 @@ function updateWorkingDaysField() {
   }
 }
 
+function getConsolidatedChartExplanation(chartType) {
+  const explanations = {
+    velocity: {
+      title: 'Velocidade (Planejado vs. Entregue)',
+      html: '<p><strong>Planejado:</strong> usa os pontos planejados da sprint (<em>manualPlannedPoints</em>).</p><p><strong>Entregue:</strong> soma os pontos das tarefas concluídas e não removidas.</p><p><strong>Linha de média:</strong> média simples dos pontos entregues nas sprints exibidas no gráfico.</p>'
+    },
+    delivered_evolution: {
+      title: 'Evolução de Pontos Entregues',
+      html: '<p>Cada ponto do gráfico representa os pontos entregues em uma sprint específica.</p><p>Os pontos entregues são calculados pelas tarefas concluídas, desconsiderando tarefas removidas.</p>'
+    },
+    productivity_evolution: {
+      title: 'Evolução de Produtividade',
+      html: '<p>Para cada sprint, o índice é calculado por:</p><p><strong>Pontos Entregues ÷ (Colaboradores × Dias Úteis)</strong>.</p><p>Quando colaboradores ou dias úteis não são válidos, o cálculo usa divisor mínimo para evitar divisão por zero.</p>'
+    },
+    task_type_distribution: {
+      title: 'Distribuição de Tarefas por Tipo',
+      html: '<p>Conta quantas tarefas existem por tipo no período selecionado.</p><p>Tarefas com status <strong>Removida</strong> não são consideradas.</p>'
+    },
+    points_type_distribution: {
+      title: 'Distribuição de Pontos por Tipo',
+      html: '<p>Soma os pontos das tarefas por tipo para mostrar concentração de esforço.</p><p>Tarefas removidas não entram no cálculo.</p>'
+    }
+  };
+  return explanations[chartType] || { title: 'Como calculamos este gráfico', html: '<p>Sem explicação cadastrada para este gráfico.</p>' };
+}
+
+function openConsolidatedChartInfo(chartType) {
+  const info = getConsolidatedChartExplanation(chartType);
+  if (consolidatedChartInfoModalTitleEl) consolidatedChartInfoModalTitleEl.textContent = info.title;
+  if (consolidatedChartInfoModalBodyEl) consolidatedChartInfoModalBodyEl.innerHTML = info.html;
+  openModal(consolidatedChartInfoModalEl);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const duplicateThemeToggles = document.querySelectorAll('#darkModeToggleBtn');
   if (duplicateThemeToggles.length > 1) {
@@ -1057,6 +1101,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   dashboardCalcInfoBtn?.addEventListener('click', () => openModal(dashboardCalcInfoModalEl));
   closeDashboardCalcInfoModalBtn?.addEventListener('click', () => closeModal(dashboardCalcInfoModalEl));
   closeDashboardCalcInfoModalXBtn?.addEventListener('click', () => closeModal(dashboardCalcInfoModalEl));
+  closeConsolidatedChartInfoModalBtn?.addEventListener('click', () => closeModal(consolidatedChartInfoModalEl));
+  closeConsolidatedChartInfoModalXBtn?.addEventListener('click', () => closeModal(consolidatedChartInfoModalEl));
   closeConsolidatedReportViewModalXBtn?.addEventListener('click', () => {
     if (consolidatedTaskTypeChart) { consolidatedTaskTypeChart.destroy(); consolidatedTaskTypeChart = null; }
     if (consolidatedPointsTypeChart) { consolidatedPointsTypeChart.destroy(); consolidatedPointsTypeChart = null; }
