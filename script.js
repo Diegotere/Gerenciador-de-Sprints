@@ -862,7 +862,7 @@ function handleConsolidatedReport() {
     if (productivityCanvas) {
       productivityEvolutionChart = new Chart(productivityCanvas, {
         type: 'line',
-        data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => (calculateSprintStats(s).deliveredPoints / ((parseFloat(s.totalCollaborators) || 1) * (parseInt(s.workingDays, 10) || 1))).toFixed(2)), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
+        data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => { const collaborators = parseFloat(s.totalCollaborators) || 1; const workingDays = parseInt(s.workingDays, 10) || 1; const divisor = collaborators / workingDays; return (calculateSprintStats(s).deliveredPoints / divisor).toFixed(2); }), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
         options: { responsive: true, maintainAspectRatio: false }
       });
     }
@@ -1046,7 +1046,7 @@ function getConsolidatedChartExplanation(chartType) {
     },
     productivity_evolution: {
       title: 'Evolução de Produtividade',
-      html: '<p>Para cada sprint, o índice é calculado por:</p><p><strong>Pontos Entregues ÷ (Colaboradores × Dias Úteis)</strong>.</p><p>Quando colaboradores ou dias úteis não são válidos, o cálculo usa divisor mínimo para evitar divisão por zero.</p>'
+      html: '<p>Para cada sprint, o índice é calculado por:</p><p><strong>Pontos Entregues ÷ (Colaboradores ÷ Dias Úteis)</strong>.</p><p>Esta fórmula representa a produtividade média por colaborador por dia útil.</p><p><em>Exemplo prático:</em> Se uma sprint entregou 100 pontos com 5 colaboradores em 10 dias úteis: 100 ÷ (5 ÷ 10) = 100 ÷ 0.5 = 200.</p><p>Quando colaboradores ou dias úteis não são válidos, o cálculo usa valor mínimo para evitar divisão por zero.</p>'
     },
     task_type_distribution: {
       title: 'Distribuição de Tarefas por Tipo',
