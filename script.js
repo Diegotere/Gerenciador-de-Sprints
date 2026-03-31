@@ -627,7 +627,7 @@ function handleConsolidatedReport() {
       if (productivityCanvas) {
         productivityEvolutionChart = new Chart(productivityCanvas, {
           type: 'line',
-          data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => (calculateSprintStats(s).deliveredPoints / ((parseFloat(s.totalCollaborators) || 1) * (parseInt(s.workingDays, 10) || 1))).toFixed(2)), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
+          data: { labels, datasets: [{ label: 'Índice de Produtividade', data: sorted.map(s => { const deliveredPoints = calculateSprintStats(s).deliveredPoints; const collaborators = parseFloat(s.totalCollaborators) || 1; const workingDays = parseInt(s.workingDays, 10) || 1; const productivity = deliveredPoints / (collaborators / workingDays); return productivity.toFixed(2); }), borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', tension: 0.1, fill: false }] },
           options: { responsive: true, maintainAspectRatio: false }
         });
       }
