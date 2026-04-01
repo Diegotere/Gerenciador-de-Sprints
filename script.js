@@ -304,7 +304,7 @@ function calculateProductivityIndex(sprint) {
   const workingDays = parseInt(sprint?.workingDays, 10) || 0;
   if (collaborators <= 0 || workingDays <= 0) return 0;
   const deliveredPoints = calculateSprintStats(sprint).deliveredPoints;
-  return Number((deliveredPoints / (collaborators * workingDays)).toFixed(2));
+  return Number((deliveredPoints / collaborators / workingDays).toFixed(2));
 }
 
 function buildDashboardDatasets(filteredSprints) {
@@ -1054,7 +1054,7 @@ function getConsolidatedChartExplanation(chartType) {
     },
     productivity_evolution: {
       title: 'Evolução de Produtividade',
-      html: '<p>Para cada sprint, o índice é calculado por:</p><p><strong>Pontos Entregues ÷ (Colaboradores × Dias Úteis)</strong></p><p>Esta fórmula representa a produtividade média: quantos pontos cada colaborador entrega por dia útil.</p><p><em>Exemplo prático:</em> Sprint 119 com 11,07 colaboradores e 22 dias úteis: 119 ÷ (11,07 × 22) = 119 ÷ 243,54 ≈ <strong>0,49</strong>.</p><p>Se colaboradores ou dias úteis não forem informados (≤ 0), a produtividade exibida será <strong>0</strong> para evitar distorção do indicador.</p>'
+      html: '<p>Para cada sprint, o índice é calculado por:</p><p><strong>Pontos Entregues ÷ Colaboradores ÷ Dias Úteis</strong></p><p>Primeiro dividimos os pontos entregues pelo número de colaboradores, depois dividimos o resultado pelos dias úteis.</p><p><em>Exemplo prático:</em> Sprint com 119 pontos, 11,07 colaboradores e 22 dias úteis: 119 ÷ 11,07 = 10,75 → 10,75 ÷ 22 ≈ <strong>0,49</strong>.</p><p>Se colaboradores ou dias úteis não forem informados (≤ 0), a produtividade exibida será <strong>0</strong> para evitar distorção do indicador.</p>'
     },
     task_type_distribution: {
       title: 'Distribuição de Tarefas por Tipo',
